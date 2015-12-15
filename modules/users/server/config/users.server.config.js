@@ -3,15 +3,15 @@
 /**
  * Module dependencies.
  */
-var passport = require('passport'),
-  User = require('mongoose').model('User'),
-  path = require('path'),
-  config = require(path.resolve('./config/config'));
+var path = require('path'),
+  config = require(path.resolve('./config/config')),
+  db = require(path.resolve('./config/lib/sequelize')),
+  passport = require('passport');
 
 /**
  * Module init function.
  */
-module.exports = function (app, db) {
+module.exports = function (app) {
   // Serialize sessions
   passport.serializeUser(function (user, done) {
     done(null, user.id);
@@ -19,11 +19,26 @@ module.exports = function (app, db) {
 
   // Deserialize sessions
   passport.deserializeUser(function (id, done) {
-    User.findOne({
-      _id: id
-    }, '-salt -password', function (err, user) {
-      done(err, user);
+    db.User.findOne({
+      attributes: { 
+        exclude: ['salt', 'password'] 
+      },
+      where: {
+        id: id
+      }
+    })
+    .then(function(user) {
+      done(null, user);
+    })
+    .catch(function(err) {
+      done(err);
     });
+
+    // User.findOne({
+    //   _id: id
+    // }, '-salt -password', function (err, user) {
+    //   done(err, user);
+    // });
   });
 
   // Initialize strategies

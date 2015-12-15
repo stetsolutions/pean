@@ -96,7 +96,7 @@ var validateSessionSecret = function (config, testing) {
     return true;
   }
 
-  if (config.sessionSecret === 'MEAN') {
+  if (config.sessionSecret === 'PEAN') {
     if (!testing) {
       console.log(chalk.red('+ WARNING: It is strongly recommended that you change sessionSecret config while running in production!'));
       console.log(chalk.red('  Please add `sessionSecret: process.env.SESSION_SECRET || \'super amazing secret\'` to '));
@@ -183,9 +183,9 @@ var initGlobalConfig = function () {
   // Merge config files
   var config = _.merge(defaultConfig, environmentConfig);
 
-  // read package.json for MEAN.JS project information
+  // read package.json for PEAN.JS project information
   var pkg = require(path.resolve('./package.json'));
-  config.meanjs = pkg;
+  config.peanjs = pkg;
 
   // Extend the config object with the local-NODE_ENV.js custom/local environment. This will override any settings present in the local configuration.
   config = _.merge(config, (fs.existsSync(path.join(process.cwd(), 'config/env/local-' + process.env.NODE_ENV + '.js')) && require(path.join(process.cwd(), 'config/env/local-' + process.env.NODE_ENV + '.js'))) || {});

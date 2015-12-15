@@ -4,8 +4,6 @@
  * Module dependencies.
  */
 var path = require('path'),
-  mongoose = require('mongoose'),
-  User = mongoose.model('User'),
   errorHandler = require(path.resolve('./modules/core/server/controllers/errors.server.controller'));
 
 /**
@@ -59,35 +57,35 @@ exports.delete = function (req, res) {
  * List of Users
  */
 exports.list = function (req, res) {
-  User.find({}, '-salt -password').sort('-created').populate('user', 'displayName').exec(function (err, users) {
-    if (err) {
-      return res.status(400).send({
-        message: errorHandler.getErrorMessage(err)
-      });
-    }
+  // User.find({}, '-salt -password').sort('-created').populate('user', 'displayName').exec(function (err, users) {
+  //   if (err) {
+  //     return res.status(400).send({
+  //       message: errorHandler.getErrorMessage(err)
+  //     });
+  //   }
 
-    res.json(users);
-  });
+  //   res.json(users);
+  // });
 };
 
 /**
  * User middleware
  */
 exports.userByID = function (req, res, next, id) {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).send({
-      message: 'User is invalid'
-    });
-  }
+  // if (!mongoose.Types.ObjectId.isValid(id)) {
+  //   return res.status(400).send({
+  //     message: 'User is invalid'
+  //   });
+  // }
 
-  User.findById(id, '-salt -password').exec(function (err, user) {
-    if (err) {
-      return next(err);
-    } else if (!user) {
-      return next(new Error('Failed to load user ' + id));
-    }
+  // User.findById(id, '-salt -password').exec(function (err, user) {
+  //   if (err) {
+  //     return next(err);
+  //   } else if (!user) {
+  //     return next(new Error('Failed to load user ' + id));
+  //   }
 
-    req.model = user;
-    next();
-  });
+  //   req.model = user;
+  //   next();
+  // });
 };

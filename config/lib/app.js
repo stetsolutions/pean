@@ -4,34 +4,32 @@
  * Module dependencies.
  */
 var config = require('../config'),
-  mongoose = require('./mongoose'),
-  express = require('./express'),
   chalk = require('chalk'),
+  sequelize = require('./sequelize'),
+  express = require('./express'),
   seed = require('./seed');
 
-function seedDB() {
-  if (config.seedDB && config.seedDB.seed) {
-    console.log(chalk.bold.red('Warning:  Database seeding is turned on'));
-    seed.start();
-  }
-}
+chalk.enabled = true;
 
 // Initialize Models
-mongoose.loadModels(seedDB);
-
-module.exports.loadModels = function loadModels() {
-  mongoose.loadModels();
-};
-
 module.exports.init = function init(callback) {
-  mongoose.connect(function (db) {
-    // Initialize express
+  sequelize.sequelize.sync({
+    force: config.db.sync
+  }).then(function (db) {
     var app = express.init(db);
-    if (callback) callback(app, db, config);
 
+    if (config.seedDB && config.seedDB.seed) {
+      console.log(chalk.bold.red('Warning:  Database seeding is turned on'));
+      seed.start();
+    }
+
+    if (callback) {
+      callback(app, db, config);
+    }
   });
 };
 
+// Start
 module.exports.start = function start(callback) {
   var _this = this;
 
@@ -45,18 +43,16 @@ module.exports.start = function start(callback) {
       console.log(chalk.green(config.app.title));
       console.log(chalk.green('Environment:\t\t\t' + process.env.NODE_ENV));
       console.log(chalk.green('Port:\t\t\t\t' + config.port));
-      console.log(chalk.green('Database:\t\t\t\t' + config.db.uri));
+      console.log(chalk.green('Database:\t\t\t\t' + config.db.options.name));
       if (process.env.NODE_ENV === 'secure') {
         console.log(chalk.green('HTTPs:\t\t\t\ton'));
       }
-      console.log(chalk.green('App version:\t\t\t' + config.meanjs.version));
-      if (config.meanjs['meanjs-version'])
-        console.log(chalk.green('MEAN.JS version:\t\t\t' + config.meanjs['meanjs-version']));
-      console.log('--');
-
+      console.log(chalk.green('App version:\t\t\t' + config.peanjs.version));
+      if (config.peanjs['peanjs-version']) {
+        console.log(chalk.green('PEAN.JS version:\t\t\t' + config.peanjs['peanjs-version']));
+        console.log('--');
+      }
       if (callback) callback(app, db, config);
     });
-
   });
-
 };
