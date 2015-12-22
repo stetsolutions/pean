@@ -1,0 +1,202 @@
+<div
+  data-ng-controller="UsersController"
+  data-ng-init="init()"
+  data-ng-show="authenticated"
+  class="page-wrapper users list-users"
+  oc-full-height
+>
+  <div class="row">
+    <div class="col-md-12">
+      <section>
+        <div class="row">
+          <div class="col-md-12">
+            <h2 class="page-header"><i class="fa fa-users fa-fw"></i> Users</h2>
+          </div>
+        </div>
+        <!-- Search -->
+        <form name="userForm" novalidate>
+          <fieldset>
+            <div class="row custom-search">
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label for="search">Search:</label>
+                  <input
+                      data-ng-change="changeSearch()"
+                      data-ng-model="search"
+                      data-ng-model-options="{debounce: 1000}"
+                      class="search form-control"
+                      id="search"
+                      type="text"
+                      >
+                </div>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+        <!-- Table -->
+        <div class="row">
+          <div class="col-md-12">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <tr>
+                  <th></th>
+                  <th></th>
+                  <th>Created</th>
+                  <th>Roles</th>
+                  <th>Display Name</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                </tr>
+                <tr data-ng-repeat="user in users track by user.id">
+                  <td>
+                    <button
+                        custom-confirmation="remove(user)"
+                        custom-message="Are you sure you want to remove <strong>{{user.displayName | capitalize: all}}</strong> as a user?"
+                        class="btn btn-default"
+                        >
+                      <i class="fa fa-trash-o"></i>
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                        data-ng-click="openRolesModal($index, 'sm')"
+                        class="btn btn-default"
+                        >
+                      <i class="fa fa-plus-circle"> Roles</i>
+                    </button>
+                  </td>
+                  <td
+                    data-ng-bind-html="user.createdAt | date: 'MMM d, y hh:mm:ss a'"
+                    class="text-nowrap"
+                  ></td>
+                  <td>
+                    <span data-ng-repeat="Roles in user.Roles | orderBy:'role'">
+                    {{ Roles.role | capitalize: all }}{{ $last ? '' : ',&nbsp;'}}
+                    </span>
+                  </td>
+                  <td data-ng-bind-html="user.displayName | capitalize: all"></td>
+                  <td data-ng-bind-html="user.username"></td>
+                  <td data-ng-bind-html="user.email"></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- Pagination -->
+        <div class="row custom-pagination">
+          <form name="paginationForm" class="form-inline" novalidate>
+            <div class="col-md-6 col-sm-12">
+              <div class="form-group">
+                <button
+                  data-ng-click="clickFastBackward()"
+                  data-ng-disabled="numberOfPages == 0 || currentPage == 1"
+                  class="btn btn-default"
+                ><i class="fa fa-fast-backward"></i>
+                </button>
+                <button
+                  data-ng-click="clickBackward()"
+                  data-ng-disabled="numberOfPages == 0 || currentPage == 1" class="btn btn-default"
+                ><i class="fa fa-backward"></i>
+                </button>
+                <input
+                  data-ng-change="changePage()"
+                  data-ng-disabled="numberOfPages == 0"
+                  data-ng-model="currentPage"
+                  data-ng-model-options="{ debounce: 1000 }"
+                  class="form-control input-small"
+                  min="1"
+                  max="numberOfPages"
+                  type="number"
+                >
+                <span>/ {{ numberOfPages }}</span>
+                <button
+                  data-ng-click="clickForward()"
+                  data-ng-disabled="numberOfPages == 0 || currentPage == numberOfPages"
+                  class="btn btn-default"
+                ><i class="fa fa-forward"></i>
+                </button>
+                <button
+                  data-ng-click="clickFastForward()"
+                  data-ng-disabled="numberOfPages == 0 || currentPage == numberOfPages"
+                  class="btn btn-default"
+                ><i class="fa fa-fast-forward"></i>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-12">
+              <select
+                data-ng-change="changeSize()"
+                data-ng-disabled="numberOfPages == 0" ng-model="pageSize" class="form-control"
+                data-ng-options="pageSize as pageSize for pageSize in pageSizes"
+              ></select>
+              <span>items per page</span>
+            </div>
+            <div class="col-md-3 col-sm-12">
+              <div style="margin-top: 6px">
+                <p>{{ pageRange }} of {{ totalItems }} items</p>
+              </div>
+            </div>
+          </form>
+        </div>
+        <!-- Roles Modal -->
+        <script type="text/ng-template" id="roles-modal.html">
+          <div class="modal-header">
+            <button
+              data-ng-click="dismiss()"
+              aria-label="Close"
+              class="close"
+              type="button"
+            ><span aria-hidden="true">&times;</span>
+            </button>
+            <h3 class="modal-title">
+              <div class="row">
+                <div class="col-md-2">
+                  <i class="fa fa-user fa-fw"></i>
+                </div>
+                <div class="col-md-8">
+                  {{user.displayName}}
+                </div>
+              </div>
+            </h3>
+          </div>
+          <div class="modal-body">
+            <form name="rolesForm" class="form-horizontal" novalidate>
+              <fieldset>
+                <div class="row">
+                  <div class="col-md-12">
+                    <h4>Roles:</h4>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12">
+                    <div data-ng-repeat="role in roles">
+                      <label class="checkbox-inline" for="{{role.id}}">
+                        <input
+                          data-ng-click="update(role.id)"
+                          data-ng-checked="isChecked(role.id)"
+                          id="{{role.id}}"
+                          type="checkbox"
+                        />
+                        {{role.label}}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              data-ng-click="dismiss()"
+              class="btn btn-default"
+            >Close</button>
+          </div>
+        </script>
+        <!-- Spinner -->
+        <span us-spinner spinner-key="spinner-1"></span>
+      </section>
+    </div>
+  </div>
+</div>
+
+

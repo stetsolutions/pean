@@ -75,11 +75,11 @@ module.exports = {
     }
   },
   livereload: true,
+  roles: ['user', 'admin'],
   seedDB: {
     seed: process.env.DB_SEED === 'true' ? true : false,
     options: {
       logResults: process.env.DB_SEED_LOG_RESULTS === 'false' ? false : true,
-      roles: ['user', 'admin'],
       seedUser: {
         username: process.env.DB_SEED_USER_USERNAME || 'user',
         provider: 'local',

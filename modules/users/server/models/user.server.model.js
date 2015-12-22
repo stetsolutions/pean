@@ -89,19 +89,23 @@ module.exports = function(sequelize, DataTypes) {
         var _this = this;
         var possibleUsername = username.toLowerCase() + (suffix || '');
 
-        _this.findOne({
-          username: possibleUsername
-        }, function(err, user) {
-          if (!err) {
+        _this
+          .findOne({
+            where: {
+              username: possibleUsername
+            }
+          })
+          .then(function(user) {
             if (!user) {
               callback(possibleUsername);
             } else {
               return _this.findUniqueUsername(username, (suffix || 0) + 1, callback);
             }
-          } else {
+          })
+          .catch(function(err) {
+            console.log(err);
             callback(null);
-          }
-        });
+          });
       },
       generateRandomPassphrase: function() {
         return new Promise(function(resolve, reject) {

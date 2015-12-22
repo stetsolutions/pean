@@ -13,89 +13,105 @@ var _ = require('lodash'),
 /**
  * Update user details
  */
-exports.update = function (req, res) {
-  // // Init Variables
-  // var user = req.user;
+exports.update = function(req, res) {
+  // Init Variables
+  var user = req.user;
 
-  // // For security measurement we remove the roles from the req.body object
-  // delete req.body.roles;
+  // For security measurement we remove the roles from the req.body object
+  delete req.body.roles;
 
-  // if (user) {
-  //   // Merge existing user
-  //   user = _.extend(user, req.body);
-  //   user.updated = Date.now();
-  //   user.displayName = user.firstName + ' ' + user.lastName;
+  if (user) {
+    // Merge existing user
+    user = _.extend(user, req.body);
+    user.displayName = user.firstName + ' ' + user.lastName;
 
-  //   user.save(function (err) {
-  //     if (err) {
-  //       return res.status(400).send({
-  //         message: errorHandler.getErrorMessage(err)
-  //       });
-  //     } else {
-  //       req.login(user, function (err) {
-  //         if (err) {
-  //           res.status(400).send(err);
-  //         } else {
-  //           res.json(user);
-  //         }
-  //       });
-  //     }
-  //   });
-  // } else {
-  //   res.status(400).send({
-  //     message: 'User is not signed in'
-  //   });
-  // }
+    user
+      .save()
+      .then(function() {
+        user
+          .getRoles()
+          .then(function(roles) {
+            var roleArray = [];
+
+            _.forEach(roles, function(role) {
+              roleArray.push(role.dataValues.role);
+            });
+
+            user.dataValues.roles = roleArray;
+
+            req.login(user, function(err) {
+              if (err) {
+                res.status(400).send(err);
+              } else {
+                // Return authenticated user
+                res.json(user);
+              }
+            });
+          });
+      })
+      .catch(function(err) {
+        console.log(err);
+
+        return res.status(400).send({
+          message: errorHandler.getErrorMessage(err)
+        });
+      });
+  } else {
+    res.status(400).send({
+      message: 'User is not signed in'
+    });
+  }
 };
 
 /**
  * Update profile picture
  */
-exports.changeProfilePicture = function (req, res) {
-  // var user = req.user;
-  // var message = null;
-  // var upload = multer(config.uploads.profileUpload).single('newProfilePicture');
-  // var profileUploadFileFilter = require(path.resolve('./config/lib/multer')).profileUploadFileFilter;
-  
-  // // Filtering to upload only images
-  // upload.fileFilter = profileUploadFileFilter;
+exports.changeProfilePicture = function(req, res) {
+  var user = req.user;
+  var message = null;
+  var upload = multer(config.uploads.profileUpload).single('newProfilePicture');
+  var profileUploadFileFilter = require(path.resolve('./config/lib/multer')).profileUploadFileFilter;
 
-  // if (user) {
-  //   upload(req, res, function (uploadError) {
-  //     if(uploadError) {
-  //       return res.status(400).send({
-  //         message: 'Error occurred while uploading profile picture'
-  //       });
-  //     } else {
-  //       user.profileImageURL = config.uploads.profileUpload.dest + req.file.filename;
+  // Filtering to upload only images
+  upload.fileFilter = profileUploadFileFilter;
 
-  //       user.save(function (saveError) {
-  //         if (saveError) {
-  //           return res.status(400).send({
-  //             message: errorHandler.getErrorMessage(saveError)
-  //           });
-  //         } else {
-  //           req.login(user, function (err) {
-  //             if (err) {
-  //               res.status(400).send(err);
-  //             } else {
-  //               res.json(user);
-  //             }
-  //           });
-  //         }
-  //       });
-  //     }
-  //   });
-  // } else {
-  //   res.status(400).send({
-  //     message: 'User is not signed in'
-  //   });
-  // }
+  if (user) {
+    upload(req, res, function(uploadError) {
+      if (uploadError) {
+        return res.status(400).send({
+          message: 'Error occurred while uploading profile picture'
+        });
+      } else {
+        user.profileImageURL = config.uploads.profileUpload.dest + req.file.filename;
+
+        user
+          .save()
+          .then(function(user) {
+            req.login(user, function(err) {
+              if (err) {
+                res.status(400).send(err);
+              } else {
+                res.json(user);
+              }
+            });
+          })
+          .catch(function(err) {
+            return res.status(400).send({
+              message: errorHandler.getErrorMessage(err)
+            });
+          });
+      }
+    });
+  } else {
+    res.status(400).send({
+      message: 'User is not signed in'
+    });
+  }
 };
 
 /**
  * Send User
  */
-exports.me = function (req, res) {
-  // res.json(req.user || null);
+exports.me = function(req, res) {
+  res.json(req.user || null);
 };

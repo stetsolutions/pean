@@ -95,12 +95,12 @@ function seedRoles(roles) {
       var role = {
         'role': value
       };
-      roles.push(role);
+      rolesArray.push(role);
     });
 
     // Create roles
     db.Role
-      .bulkCreate(roles)
+      .bulkCreate(rolesArray)
       .then(function() {
         resolve();
       })
@@ -183,7 +183,7 @@ module.exports.start = function start() {
     });
 
     _.forEach(seedOptions.seedUser.roles, function(value) {
-      userRoles.push(seedOptions.roles.indexOf(value) + 1);
+      userRoles.push(config.roles.indexOf(value) + 1);
     });
   }
 
@@ -198,7 +198,7 @@ module.exports.start = function start() {
     });
 
     _.forEach(seedOptions.seedAdmin.roles, function(value) {
-      adminRoles.push(seedOptions.roles.indexOf(value) + 1);
+      adminRoles.push(config.roles.indexOf(value) + 1);
     });
   }
 
@@ -208,7 +208,7 @@ module.exports.start = function start() {
     if (process.env.NODE_ENV === 'production') {
       // Add Admin account
       db.User.generateRandomPassphrase()
-        .then(seedRoles(seedOptions.roles))
+        .then(seedRoles(config.roles))
         .then(seedTheUser(adminAccount, adminRoles))
         .then(function() {
           resolve();
@@ -218,7 +218,7 @@ module.exports.start = function start() {
     } else {
       // Add both Admin and User account
       db.User.generateRandomPassphrase()
-        .then(seedRoles(seedOptions.roles))
+        .then(seedRoles(config.roles))
         .then(seedTheUser(userAccount, userRoles))
         .then(db.User.generateRandomPassphrase)
         .then(seedTheUser(adminAccount, adminRoles))

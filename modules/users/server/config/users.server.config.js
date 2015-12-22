@@ -3,7 +3,8 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+var _ = require('lodash'),
+  path = require('path'),
   config = require(path.resolve('./config/config')),
   db = require(path.resolve('./config/lib/sequelize')),
   passport = require('passport');
@@ -11,38 +12,44 @@ var path = require('path'),
 /**
  * Module init function.
  */
-module.exports = function (app) {
+module.exports = function(app) {
   // Serialize sessions
-  passport.serializeUser(function (user, done) {
+  passport.serializeUser(function(user, done) {
     done(null, user.id);
   });
 
   // Deserialize sessions
-  passport.deserializeUser(function (id, done) {
-    db.User.findOne({
-      attributes: { 
-        exclude: ['salt', 'password'] 
-      },
-      where: {
-        id: id
-      }
-    })
-    .then(function(user) {
-      done(null, user);
-    })
-    .catch(function(err) {
-      done(err);
-    });
+  passport.deserializeUser(function(id, done) {
+    db.User
+      .findOne({
+        where: {
+          id: id
+        }
+      })
+      .then(function(user) {
+        if (user) {
+          user
+            .getRoles()
+            .then(function(roles) {
+              var roleArray = [];
 
-    // User.findOne({
-    //   _id: id
-    // }, '-salt -password', function (err, user) {
-    //   done(err, user);
-    // });
+              _.each(roles, function(role) {
+                roleArray.push(role.dataValues.role);
+              });
+
+              user.dataValues.roles = roleArray;
+
+              done(null, user);
+            });
+        }
+      })
+      .catch(function(error) {
+        done(error);
+      });
   });
 
   // Initialize strategies
-  config.utils.getGlobbedPaths(path.join(__dirname, './strategies/**/*.js')).forEach(function (strategy) {
+  config.utils.getGlobbedPaths(path.join(__dirname, './strategies/**/*.js')).forEach(function(strategy) {
     require(path.resolve(strategy))(config);
   });
 
