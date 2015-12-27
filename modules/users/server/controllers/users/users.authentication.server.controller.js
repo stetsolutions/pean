@@ -118,7 +118,10 @@ exports.signin = function(req, res, next) {
  */
 exports.signout = function(req, res) {
   req.logout();
-  res.redirect('/');
+
+  req.session.destroy(function (err) {
+    res.redirect('/');
+  });
 };
 
 /**
@@ -215,10 +218,13 @@ exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
                     .addRoles([1])
                     .then(function(roles) {
                       return done(null, user);
+                    })
+                    .catch(function(err) {
+                      return done(err);
                     });
                 })
                 .catch(function(err) {
-                  console.log(err);
+                  return done(err);
                 });
             }
           });
@@ -269,20 +275,16 @@ exports.removeOAuthProvider = function(req, res, next) {
     return res.status(400).send();
   }
 
-  // Delete the additional provider
-  if (user.additionalProvidersData[provider]) {
-    delete user.additionalProvidersData[provider];
-
-    // Then tell mongoose that we've updated the additionalProvidersData field
-    user.markModified('additionalProvidersData');
+  //Delete the additional provider
+  if (user.dataValues.additionalProvidersData[provider]) {
+    var data = user.dataValues.additionalProvidersData;
+    delete data[provider];
+    user.additionalProvidersData = data;
   }
 
-  user.save(function(err) {
-    if (err) {
-      return res.status(400).send({
-        message: errorHandler.getErrorMessage(err)
-      });
-    } else {
+  user
+    .save()
+    .then(function(user) {
       req.login(user, function(err) {
         if (err) {
           return res.status(400).send(err);
@@ -290,6 +292,10 @@ exports.removeOAuthProvider = function(req, res, next) {
           return res.json(user);
         }
       });
-    }
-  });
+    })
+    .catch(function(err) {
+      return res.status(400).send({
+        message: errorHandler.getErrorMessage(err)
+      });
+    });
 };
