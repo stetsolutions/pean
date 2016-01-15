@@ -52,7 +52,7 @@ Fixes #82
 ```
 
 * Types: 
-  * feature - Features, Enhancements, and overall Improvements
+  * feat - Features, Enhancements, and overall Improvements
   * fix - Fixes, Bugs, HotFixs, etc...
   * doc - Changes to the Documentation and doesn't actually touch any code.
 * Scope:

@@ -24,13 +24,13 @@ angular.module('users').controller('RolesController', [
     _,
     user
   ) {
-    $scope.roles = [{
-      id: 1,
-      label: 'User'
-    },{
-      id: 2,
-      label: 'Admin'
-    }];
+    // $scope.roles = [{
+    //   id: 1,
+    //   label: 'User'
+    // }, {
+    //   id: 2,
+    //   label: 'Admin'
+    // }];
 
     $scope.user = user;
 
@@ -39,6 +39,21 @@ angular.module('users').controller('RolesController', [
      */
     $scope.dismiss = function() {
       $modalInstance.dismiss(true);
+    };
+
+    /**
+     * Get roles
+     * @return {[type]} [description]
+     */
+    $scope.getRoles = function() {
+      $http({
+        url: 'api/users/roles',
+        method: 'GET'
+      })
+      .success(function(data) {
+        console.log(data);
+        $scope.roles = data;
+      });
     };
 
     /**
@@ -85,10 +100,19 @@ angular.module('users').controller('RolesController', [
         url: 'api/users/admin/' + user.id,
         method: 'PUT',
         params: params
-      }).success(function(data) {
+      })
+      .success(function(data) {
         $rootScope.$emit('rolesUpdate');
         user = data;
       });
+    };
+    
+    /**
+     * Init
+     * @return {[type]} [description]
+     */
+    $scope.init = function() {
+      $scope.getRoles();
     };
   }
 ]);

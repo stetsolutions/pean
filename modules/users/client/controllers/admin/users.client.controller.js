@@ -74,35 +74,6 @@ angular.module('users').controller('UsersController', [
 
         $scope.pageRange = beginning + ' ~ ' + end;
       });
-
-      // var total = Users.query({
-      //   'limit': null,
-      //   'offset': null,
-      //   'search': search
-      // }, function() {
-      //   $scope.totalItems = total.length;
-      //   $scope.numberOfPages = Math.ceil($scope.totalItems / $scope.pageSize);
-
-      //   if ($scope.numberOfPages !== 0 && $scope.currentPage > $scope.numberOfPages) {
-      //     $scope.currentPage = $scope.numberOfPages;
-      //   }
-
-      //   var beginning = $scope.pageSize * $scope.currentPage - $scope.pageSize;
-      //   var end = (($scope.pageSize * $scope.currentPage) > $scope.totalItems) ? $scope.totalItems : ($scope.pageSize * $scope.currentPage);
-
-      //   $scope.pageRange = beginning + ' ~ ' + end;
-      // });
-
-      // total.$promise.then(function(result) {
-
-      //   var data = Users.query({
-      //     'limit': limit,
-      //     'offset': offset,
-      //     'search': search
-      //   }, function() {
-      //     $scope.users = data;
-      //   });
-      // });
     };
 
     /**
@@ -203,7 +174,18 @@ angular.module('users').controller('UsersController', [
       }
     };
 
-    /********** Modal **********/
+    /**
+     * Init
+     */
+    $scope.init = function() {
+      if ($scope.authenticated) {
+        $scope.find();
+      }
+    };
+
+    /*
+     * Modal
+     */
 
     /**
      * Open roles modal
@@ -228,16 +210,5 @@ angular.module('users').controller('UsersController', [
     $rootScope.$on('rolesUpdate', function(event) {
       $scope.init();
     });
-
-    /********** Initialization **********/
-
-    /**
-     * Init
-     */
-    $scope.init = function() {
-      if ($scope.authenticated) {
-        $scope.find();
-      }
-    };
   }
 ]);

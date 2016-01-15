@@ -19,4 +19,9 @@ module.exports = function(app) {
     .delete(adminPolicy.isAllowed, users.delete)
     .get(adminPolicy.isAllowed, users.read)
     .put(adminPolicy.isAllowed, users.modify);
+
+  // Users collection routes
+  app.route('/api/users/roles')
+    .get(adminPolicy.isAllowed, users.roles);
+
 };

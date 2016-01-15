@@ -140,6 +140,7 @@
         </div>
         <!-- Roles Modal -->
         <script type="text/ng-template" id="roles-modal.html">
+          <div data-ng-init="init()"></div>
           <div class="modal-header">
             <button
               data-ng-click="dismiss()"
@@ -177,7 +178,7 @@
                           id="{{role.id}}"
                           type="checkbox"
                         />
-                        {{role.label}}
+                        {{role.role}}
                       </label>
                     </div>
                   </div>

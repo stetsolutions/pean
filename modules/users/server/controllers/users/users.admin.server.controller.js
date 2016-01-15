@@ -12,7 +12,10 @@ var path = require('path'),
 chalk.enabled = true;
 
 /**
- * Show the current user
+ * Read
+ * @param  {[type]} req [description]
+ * @param  {[type]} res [description]
+ * @return {[type]}     [description]
  */
 exports.read = function (req, res) {
   // console.log('* user.server.controller - read *');
@@ -40,8 +43,9 @@ exports.read = function (req, res) {
 
 /**
  * Delete
- * @param req
- * @param res
+ * @param  {[type]} req [description]
+ * @param  {[type]} res [description]
+ * @return {[type]}     [description]
  */
 exports.delete = function(req, res) {
   // console.log('* user.server.controller - delete *');
@@ -78,8 +82,9 @@ exports.delete = function(req, res) {
 
 /**
  * List
- * @param req
- * @param res
+ * @param  {[type]} req [description]
+ * @param  {[type]} res [description]
+ * @return {[type]}     [description]
  */
 exports.list = function(req, res) {
   // console.log('* user.server.controller - list *');
@@ -136,8 +141,9 @@ exports.list = function(req, res) {
 
 /**
  * Modify
- * @param req
- * @param res
+ * @param  {[type]} req [description]
+ * @param  {[type]} res [description]
+ * @return {[type]}     [description]
  */
 exports.modify = function(req, res) {
   console.log('* user.server.controller - modify *');
@@ -187,6 +193,25 @@ exports.modify = function(req, res) {
             message: errorHandler.getErrorMessage(err)
           });
         });
+    })
+    .catch(function(err) {
+      return res.status(400).send({
+        message: errorHandler.getErrorMessage(err)
+      });
+    });
+};
+
+/**
+ * Roles
+ * @param  {[type]} req [description]
+ * @param  {[type]} res [description]
+ * @return {[type]}     [description]
+ */
+exports.roles = function (req, res) {
+  db.Role
+    .findAll()
+    .then(function(roles) {
+      res.json(roles);
     })
     .catch(function(err) {
       return res.status(400).send({
