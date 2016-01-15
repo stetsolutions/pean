@@ -1,39 +1,61 @@
 'use strict';
 
-var should = require('should'),
-  request = require('supertest'),
+var _ = require('lodash'),
   path = require('path'),
-  mongoose = require('mongoose'),
-  User = mongoose.model('User'),
-  express = require(path.resolve('./config/lib/express'));
+  config = require(path.resolve('./config/config')),
+  db = require(path.resolve('./config/lib/sequelize')),
+  express = require(path.resolve('./config/lib/express')),
+  fs = require('fs-extra'),
+  request = require('supertest'),
+  should = require('should');
 
 /**
  * Globals
  */
-var app, agent, credentials, user, _user, admin;
+var agent, app;
+var credentials, data, user;
+var roleAdmin, roleUser; 
 
 /**
  * User routes tests
  */
-describe('User CRUD tests', function () {
+describe('User "routes" tests', function() {
 
-  before(function (done) {
+  before(function(done) {
     // Get application
-    app = express.init(mongoose);
+    app = express.init(db.sequelize);
     agent = request.agent(app);
+
+    // Get roles
+    db.Role
+      .findAll ()
+      .then(function(roles) {
+        
+        _.each(roles, function(value) {
+          if (value.role === 'admin') {
+            roleAdmin = value.id;
+          } else if (value.role === 'user') {
+            roleUser = value.id;
+          }
+        });
+
+        done();
+      })
+      .catch(function(err) {
+        return done(err);
+      });
 
     done();
   });
 
-  beforeEach(function (done) {
+  beforeEach(function(done) {
     // Create user credentials
     credentials = {
       username: 'username',
-      password: 'M3@n.jsI$Aw3$0m3'
+      password: 'sW1kXqrbyZUBNub6FKJgEA'
     };
 
-    // Create a new user
-    _user = {
+    data = {
       firstName: 'Full',
       lastName: 'Name',
       displayName: 'Full Name',
@@ -43,408 +65,619 @@ describe('User CRUD tests', function () {
       provider: 'local'
     };
 
-    user = new User(_user);
+    // Build new user
+    user =
+      db.User
+      .build(data);
 
-    // Save a user to the test db and create new article
-    user.save(function (err) {
-      should.not.exist(err);
-      done();
-    });
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        should.exist(user);
+        done();
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
   });
 
-  it('should be able to register a new user', function (done) {
+  it('should be able to register a new user', function(done) {
 
-    _user.username = 'register_new_user';
-    _user.email = 'register_new_user_@test.com';
+    data.username = 'register_newdata';
+    data.email = 'register_newdata_@test.com';
 
-    agent.post('/api/auth/signup')
-      .send(_user)
+    // Sign up 
+    agent
+      .post('/api/auth/signup')
+      .send(data)
       .expect(200)
-      .end(function (signupErr, signupRes) {
-        // Handle signpu error
-        if (signupErr) {
-          return done(signupErr);
+      .end(function(err, res) {
+
+        if (err) {
+          return done(err);
         }
 
-        signupRes.body.username.should.equal(_user.username);
-        signupRes.body.email.should.equal(_user.email);
-        // Assert a proper profile image has been set, even if by default
-        signupRes.body.profileImageURL.should.not.be.empty();
-        // Assert we have just the default 'user' role
-        signupRes.body.roles.should.be.instanceof(Array).and.have.lengthOf(1);
-        signupRes.body.roles.indexOf('user').should.equal(0);
+        res.body.username.should.equal(data.username);
+        res.body.email.should.equal(data.email);
+        res.body.profileImageURL.should.not.be.empty();
+        res.body.roles.should.be.instanceof(Array).and.have.lengthOf(1);
+        res.body.roles.indexOf('user').should.equal(0);
+
         return done();
       });
   });
 
-  it('should be able to login successfully and logout successfully', function (done) {
-    agent.post('/api/auth/signin')
+  it('should be able to login successfully and logout successfully', function(done) {
+    // Sign in 
+    agent
+      .post('/api/auth/signin')
       .send(credentials)
       .expect(200)
-      .end(function (signinErr, signinRes) {
-        // Handle signin error
-        if (signinErr) {
-          return done(signinErr);
+      .end(function(err, res) {
+
+        if (err) {
+          return done(err);
         }
 
-        // Logout
-        agent.get('/api/auth/signout')
+        // Sign out 
+        agent
+          .get('/api/auth/signout')
           .expect(302)
-          .end(function (signoutErr, signoutRes) {
-            if (signoutErr) {
-              return done(signoutErr);
-            }
+          .end(function(err, res) {
 
-            signoutRes.redirect.should.equal(true);
-
-            // NodeJS v4 changed the status code representation so we must check
-            // before asserting, to be comptabile with all node versions.
-            if (process.version.indexOf('v4') === 0) {
-              signoutRes.text.should.equal('Found. Redirecting to /');
-            } else {
-              signoutRes.text.should.equal('Moved Temporarily. Redirecting to /');
-            }
-
-            return done();
-          });
-      });
-  });
-
-  it('should not be able to retrieve a list of users if not admin', function (done) {
-    agent.post('/api/auth/signin')
-      .send(credentials)
-      .expect(200)
-      .end(function (signinErr, signinRes) {
-        // Handle signin error
-        if (signinErr) {
-          return done(signinErr);
-        }
-
-        // Request list of users
-        agent.get('/api/users')
-          .expect(403)
-          .end(function (usersGetErr, usersGetRes) {
-            if (usersGetErr) {
-              return done(usersGetErr);
-            }
-
-            return done();
-          });
-      });
-  });
-
-  it('should be able to retrieve a list of users if admin', function (done) {
-    user.roles = ['user', 'admin'];
-
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/signin')
-        .send(credentials)
-        .expect(200)
-        .end(function (signinErr, signinRes) {
-          // Handle signin error
-          if (signinErr) {
-            return done(signinErr);
-          }
-
-          // Request list of users
-          agent.get('/api/users')
-            .expect(200)
-            .end(function (usersGetErr, usersGetRes) {
-              if (usersGetErr) {
-                return done(usersGetErr);
-              }
-
-              usersGetRes.body.should.be.instanceof(Array).and.have.lengthOf(1);
-
-              // Call the assertion callback
-              return done();
-            });
-        });
-    });
-  });
-
-  it('should be able to get a single user details if admin', function (done) {
-    user.roles = ['user', 'admin'];
-
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/signin')
-        .send(credentials)
-        .expect(200)
-        .end(function (signinErr, signinRes) {
-          // Handle signin error
-          if (signinErr) {
-            return done(signinErr);
-          }
-
-          // Get single user information from the database
-          agent.get('/api/users/' + user._id)
-            .expect(200)
-            .end(function (userInfoErr, userInfoRes) {
-              if (userInfoErr) {
-                return done(userInfoErr);
-              }
-
-              userInfoRes.body.should.be.instanceof(Object);
-              userInfoRes.body._id.should.be.equal(String(user._id));
-
-              // Call the assertion callback
-              return done();
-            });
-        });
-    });
-  });
-
-  it('should be able to update a single user details if admin', function (done) {
-    user.roles = ['user', 'admin'];
-
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/signin')
-        .send(credentials)
-        .expect(200)
-        .end(function (signinErr, signinRes) {
-          // Handle signin error
-          if (signinErr) {
-            return done(signinErr);
-          }
-
-          // Get single user information from the database
-
-          var userUpdate = {
-            firstName: 'admin_update_first',
-            lastName: 'admin_update_last',
-            roles: ['admin']
-          };
-
-          agent.put('/api/users/' + user._id)
-            .send(userUpdate)
-            .expect(200)
-            .end(function (userInfoErr, userInfoRes) {
-              if (userInfoErr) {
-                return done(userInfoErr);
-              }
-
-              userInfoRes.body.should.be.instanceof(Object);
-              userInfoRes.body.firstName.should.be.equal('admin_update_first');
-              userInfoRes.body.lastName.should.be.equal('admin_update_last');
-              userInfoRes.body.roles.should.be.instanceof(Array).and.have.lengthOf(1);
-              userInfoRes.body._id.should.be.equal(String(user._id));
-
-              // Call the assertion callback
-              return done();
-            });
-        });
-    });
-  });
-
-  it('should be able to delete a single user if admin', function (done) {
-    user.roles = ['user', 'admin'];
-
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/signin')
-        .send(credentials)
-        .expect(200)
-        .end(function (signinErr, signinRes) {
-          // Handle signin error
-          if (signinErr) {
-            return done(signinErr);
-          }
-
-          agent.delete('/api/users/' + user._id)
-            //.send(userUpdate)
-            .expect(200)
-            .end(function (userInfoErr, userInfoRes) {
-              if (userInfoErr) {
-                return done(userInfoErr);
-              }
-
-              userInfoRes.body.should.be.instanceof(Object);
-              userInfoRes.body._id.should.be.equal(String(user._id));
-
-              // Call the assertion callback
-              return done();
-            });
-        });
-    });
-  });
-
-  it('forgot password should return 400 for non-existent username', function (done) {
-    user.roles = ['user'];
-
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/forgot')
-        .send({
-          username: 'some_username_that_doesnt_exist'
-        })
-        .expect(400)
-        .end(function (err, res) {
-          // Handle error
-          if (err) {
-            return done(err);
-          }
-
-          res.body.message.should.equal('No account with that username has been found');
-          return done();
-        });
-    });
-  });
-
-  it('forgot password should return 400 for no username provided', function (done) {
-    var provider = 'facebook';
-    user.provider = provider;
-    user.roles = ['user'];
-
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/forgot')
-        .send({
-          username: ''
-        })
-        .expect(400)
-        .end(function (err, res) {
-          // Handle error
-          if (err) {
-            return done(err);
-          }
-
-          res.body.message.should.equal('Username field must not be blank');
-          return done();
-        });
-    });
-  });
-
-  it('forgot password should return 400 for non-local provider set for the user object', function (done) {
-    var provider = 'facebook';
-    user.provider = provider;
-    user.roles = ['user'];
-
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/forgot')
-        .send({
-          username: user.username
-        })
-        .expect(400)
-        .end(function (err, res) {
-          // Handle error
-          if (err) {
-            return done(err);
-          }
-
-          res.body.message.should.equal('It seems like you signed up using your ' + user.provider + ' account');
-          return done();
-        });
-    });
-  });
-
-  it('forgot password should be able to reset password for user password reset request', function (done) {
-    user.roles = ['user'];
-
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/forgot')
-        .send({
-          username: user.username
-        })
-        .expect(400)
-        .end(function (err, res) {
-          // Handle error
-          if (err) {
-            return done(err);
-          }
-
-          User.findOne({ username: user.username.toLowerCase() }, function(err, userRes) {
-            userRes.resetPasswordToken.should.not.be.empty();
-            should.exist(userRes.resetPasswordExpires);
-            res.body.message.should.be.equal('Failure sending email');
-            return done();
-          });
-        });
-    });
-  });
-
-  it('forgot password should be able to reset the password using reset token', function (done) {
-    user.roles = ['user'];
-
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/forgot')
-        .send({
-          username: user.username
-        })
-        .expect(400)
-        .end(function (err, res) {
-          // Handle error
-          if (err) {
-            return done(err);
-          }
-
-          User.findOne({ username: user.username.toLowerCase() }, function(err, userRes) {
-            userRes.resetPasswordToken.should.not.be.empty();
-            should.exist(userRes.resetPasswordExpires);
-
-            agent.get('/api/auth/reset/' + userRes.resetPasswordToken)
-            .expect(302)
-            .end(function (err, res) {
-              // Handle error
-              if (err) {
-                return done(err);
-              }
-
-              res.headers.location.should.be.equal('/password/reset/' + userRes.resetPasswordToken);
-
-              return done();
-            });
-          });
-        });
-    });
-  });
-
-  it('forgot password should return error when using invalid reset token', function (done) {
-    user.roles = ['user'];
-
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/forgot')
-        .send({
-          username: user.username
-        })
-        .expect(400)
-        .end(function (err, res) {
-          // Handle error
-          if (err) {
-            return done(err);
-          }
-
-          var invalidToken = 'someTOKEN1234567890';
-          agent.get('/api/auth/reset/' + invalidToken)
-          .expect(302)
-          .end(function (err, res) {
-            // Handle error
             if (err) {
               return done(err);
             }
 
-            res.headers.location.should.be.equal('/password/reset/invalid');
+            res.redirect.should.equal(true);
+
+            // NodeJS v4 changed the status code representation so we must check
+            // before asserting, to be comptabile with all node versions.
+            if (process.version.indexOf('v4') === 0) {
+              res.text.should.equal('Found. Redirecting to /');
+            } else {
+              res.text.should.equal('Moved Temporarily. Redirecting to /');
+            }
 
             return done();
           });
-        });
-    });
+      });
   });
 
-  it('should be able to change user own password successfully', function (done) {
+  it('should not be able to retrieve a list of users if not admin', function(done) {
+    // Sign in 
+    agent
+      .post('/api/auth/signin')
+      .send(credentials)
+      .expect(200)
+      .end(function(err, res) {
+
+        if (err) {
+          return done(err);
+        }
+
+        // Request list of users
+        agent
+          .get('/api/users/admin')
+          .expect(403)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            // Sign out
+            agent
+              .get('/api/auth/signout')
+              .expect(302)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                res.redirect.should.equal(true);
+
+                // NodeJS v4 changed the status code representation so we must check
+                // before asserting, to be comptabile with all node versions.
+                if (process.version.indexOf('v4') === 0) {
+                  res.text.should.equal('Found. Redirecting to /');
+                } else {
+                  res.text.should.equal('Moved Temporarily. Redirecting to /');
+                }
+
+                return done();
+              });
+          });
+      });
+  });
+
+  it('should be able to retrieve a list of users if admin', function(done) {
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRoles([roleAdmin, roleUser])
+          .then(function() {
+            // Sign in 
+            agent
+              .post('/api/auth/signin')
+              .send(credentials)
+              .expect(200)
+              .end(function(err, res) {
+
+                if (err) {
+                  return done(err);
+                }
+
+                // Get list of users
+                agent
+                  .get('/api/users/admin')
+                  .expect(200)
+                  .end(function(err, res) {
+
+                    if (err) {
+                      return done(err);
+                    }
+
+                    res.body.rows.should.be.instanceof(Array).and.have.lengthOf(2);
+
+                    // Sign out 
+                    agent
+                      .get('/api/auth/signout')
+                      .expect(302)
+                      .end(function(err, res) {
+
+                        if (err) {
+                          return done(err);
+                        }
+
+                        res.redirect.should.equal(true);
+
+                        // NodeJS v4 changed the status code representation so we must check
+                        // before asserting, to be comptabile with all node versions.
+                        if (process.version.indexOf('v4') === 0) {
+                          res.text.should.equal('Found. Redirecting to /');
+                        } else {
+                          res.text.should.equal('Moved Temporarily. Redirecting to /');
+                        }
+
+                        return done();
+                      });
+                  });
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
+  });
+
+  it('should be able to get a single user details if admin', function(done) {
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRoles([roleAdmin, roleUser])
+          .then(function() {
+            // Sign in 
+            agent
+              .post('/api/auth/signin')
+              .send(credentials)
+              .expect(200)
+              .end(function(err, res) {
+
+                if (err) {
+                  return done(err);
+                }
+                // Get single user information from the database
+                agent
+                  .get('/api/users/admin/' + user.id)
+                  .expect(200)
+                  .end(function(err, res) {
+
+                    if (err) {
+                      return done(err);
+                    }
+
+                    res.body.should.be.instanceof(Object);
+                    res.body.id.should.be.equal(user.id);
+
+                    // Sign out
+                    agent
+                      .get('/api/auth/signout')
+                      .expect(302)
+                      .end(function(err, res) {
+                        if (err) {
+                          return done(err);
+                        }
+
+                        res.redirect.should.equal(true);
+
+                        // NodeJS v4 changed the status code representation so we must check
+                        // before asserting, to be comptabile with all node versions.
+                        if (process.version.indexOf('v4') === 0) {
+                          res.text.should.equal('Found. Redirecting to /');
+                        } else {
+                          res.text.should.equal('Moved Temporarily. Redirecting to /');
+                        }
+
+                        return done();
+                      });
+                  });
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
+  });
+
+  it('should be able to update a single user details if admin', function(done) {
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRoles([roleAdmin, roleUser])
+          .then(function() {
+
+            // Sign in 
+            agent
+              .post('/api/auth/signin')
+              .send(credentials)
+              .expect(200)
+              .end(function(err, res) {
+                // Handle signin error
+                if (err) {
+                  return done(err);
+                }
+
+                var userUpdate = {
+                  firstName: 'admin_update_first',
+                  lastName: 'admin_update_last'
+                };
+
+                // Update user
+                agent
+                  .put('/api/users')
+                  .send(userUpdate)
+                  .expect(200)
+                  .end(function(err, res) {
+
+                    if (err) {
+                      return done(err);
+                    }
+
+                    res.body.should.be.instanceof(Object);
+                    res.body.firstName.should.be.equal('admin_update_first');
+                    res.body.lastName.should.be.equal('admin_update_last');
+                    res.body.roles.should.be.instanceof(Array).and.have.lengthOf(2);
+                    res.body.id.should.be.equal(user.id);
+
+                    // Sign out
+                    agent
+                      .get('/api/auth/signout')
+                      .expect(302)
+                      .end(function(err, res) {
+                        if (err) {
+                          return done(err);
+                        }
+
+                        res.redirect.should.equal(true);
+
+                        // NodeJS v4 changed the status code representation so we must check
+                        // before asserting, to be comptabile with all node versions.
+                        if (process.version.indexOf('v4') === 0) {
+                          res.text.should.equal('Found. Redirecting to /');
+                        } else {
+                          res.text.should.equal('Moved Temporarily. Redirecting to /');
+                        }
+
+                        return done();
+                      });
+                  });
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
+  });
+
+  it('forgot password should return 400 for non-existent username', function(done) {
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRole(roleUser)
+          .then(function() {
+            // Forgot
+            agent
+              .post('/api/auth/forgot')
+              .send({
+                username: 'somedataname_that_doesnt_exist'
+              })
+              .expect(400)
+              .end(function(err, res) {
+
+                if (err) {
+                  return done(err);
+                }
+
+                res.body.message.should.equal('No account with that username has been found');
+
+                return done();
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
+  });
+
+  it('forgot password should return 400 for no username provided', function(done) {
+    user.provider = 'facebook';
+
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRole(roleUser)
+          .then(function() {
+            // Forgot
+            agent
+              .post('/api/auth/forgot')
+              .send({
+                username: ''
+              })
+              .expect(400)
+              .end(function(err, res) {
+
+                if (err) {
+                  return done(err);
+                }
+
+                res.body.message.should.equal('Username field must not be blank');
+
+                return done();
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
+  });
+
+  it('forgot password should return 400 for non-local provider set for the user object', function(done) {
+    user.provider = 'facebook';
+
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRole(roleUser)
+          .then(function() {
+            // Forgot
+            agent
+              .post('/api/auth/forgot')
+              .send({
+                username: user.username
+              })
+              .expect(400)
+              .end(function(err, res) {
+
+                if (err) {
+                  return done(err);
+                }
+
+                res.body.message.should.equal('It seems like you signed up using your ' + user.provider + ' account');
+
+                return done();
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
+  });
+
+  it('forgot password should be able to reset password for user password reset request', function(done) {
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRole(roleUser)
+          .then(function() {
+            // Forgot
+            agent
+              .post('/api/auth/forgot')
+              .send({
+                username: user.username
+              })
+              .expect(400)
+              .end(function(err, res) {
+
+                if (err) {
+                  return done(err);
+                }
+
+                db.User
+                  .findOne({
+                    where: {
+                      username: user.username.toLowerCase()
+                    }
+                  })
+                  .then(function(user) {
+                    user.resetPasswordToken.should.not.be.empty();
+                    should.exist(user.resetPasswordExpires);
+
+                    return done();
+                  })
+                  .catch(function(err) {
+                    should.not.exist(err);
+                  });
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
+  });
+
+  it('forgot password should be able to reset the password using reset token', function(done) {
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRole(roleUser)
+          .then(function() {
+            // Forgot
+            agent
+              .post('/api/auth/forgot')
+              .send({
+                username: user.username
+              })
+              .expect(400)
+              .end(function(err, res) {
+
+                if (err) {
+                  return done(err);
+                }
+
+                db.User
+                  .findOne({
+                    where: {
+                      username: user.username.toLowerCase()
+                    }
+                  })
+                  .then(function(user) {
+                    user.resetPasswordToken.should.not.be.empty();
+                    should.exist(user.resetPasswordExpires);
+
+                    agent
+                      .get('/api/auth/reset/' + user.resetPasswordToken)
+                      .expect(302)
+                      .end(function(err, res) {
+                        // Handle error
+                        if (err) {
+                          return done(err);
+                        }
+
+                        res.headers.location.should.be.equal('/password/reset/' + user.resetPasswordToken);
+
+                        return done();
+                      });
+                  })
+                  .catch(function(err) {
+                    should.not.exist(err);
+                  });
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
+  });
+
+  it('forgot password should return error when using invalid reset token', function(done) {
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRole(roleUser)
+          .then(function() {
+            // Forgot
+            agent
+              .post('/api/auth/forgot')
+              .send({
+                username: user.username
+              })
+              .expect(400)
+              .end(function(err, res) {
+
+                if (err) {
+                  return done(err);
+                }
+
+                db.User
+                  .findOne({
+                    where: {
+                      username: user.username.toLowerCase()
+                    }
+                  })
+                  .then(function(user) {
+                    user.resetPasswordToken.should.not.be.empty();
+                    should.exist(user.resetPasswordExpires);
+
+                    var invalidToken = 'someTOKEN1234567890';
+
+                    agent
+                      .get('/api/auth/reset/' + invalidToken)
+                      .expect(400)
+                      .end(function(err, res) {
+                        if (err) {
+                          return done(err);
+                        }
+
+                        res.accepted.should.be.equal(false);
+
+                        return done();
+                      });
+                  })
+                  .catch(function(err) {
+                    should.not.exist(err);
+                  });
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
+  });
+
+  it('should be able to change user own password successfully', function(done) {
     agent.post('/api/auth/signin')
       .send(credentials)
       .expect(200)
-      .end(function (signinErr, signinRes) {
+      .end(function(err, res) {
         // Handle signin error
-        if (signinErr) {
-          return done(signinErr);
+        if (err) {
+          return done(err);
         }
 
         // Change password
@@ -455,25 +688,46 @@ describe('User CRUD tests', function () {
             currentPassword: credentials.password
           })
           .expect(200)
-          .end(function (err, res) {
+          .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
             res.body.message.should.equal('Password changed successfully');
-            return done();
+
+            // Sign out
+            agent
+              .get('/api/auth/signout')
+              .expect(302)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                res.redirect.should.equal(true);
+
+                // NodeJS v4 changed the status code representation so we must check
+                // before asserting, to be comptabile with all node versions.
+                if (process.version.indexOf('v4') === 0) {
+                  res.text.should.equal('Found. Redirecting to /');
+                } else {
+                  res.text.should.equal('Moved Temporarily. Redirecting to /');
+                }
+
+                return done();
+              });
           });
       });
   });
 
-  it('should not be able to change user own password if wrong verifyPassword is given', function (done) {
+  it('should not be able to change user own password if wrong verifyPassword is given', function(done) {
     agent.post('/api/auth/signin')
       .send(credentials)
       .expect(200)
-      .end(function (signinErr, signinRes) {
+      .end(function(err, res) {
         // Handle signin error
-        if (signinErr) {
-          return done(signinErr);
+        if (err) {
+          return done(err);
         }
 
         // Change password
@@ -484,25 +738,46 @@ describe('User CRUD tests', function () {
             currentPassword: credentials.password
           })
           .expect(400)
-          .end(function (err, res) {
+          .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
             res.body.message.should.equal('Passwords do not match');
-            return done();
+
+            // Sign out
+            agent
+              .get('/api/auth/signout')
+              .expect(302)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                res.redirect.should.equal(true);
+
+                // NodeJS v4 changed the status code representation so we must check
+                // before asserting, to be comptabile with all node versions.
+                if (process.version.indexOf('v4') === 0) {
+                  res.text.should.equal('Found. Redirecting to /');
+                } else {
+                  res.text.should.equal('Moved Temporarily. Redirecting to /');
+                }
+
+                return done();
+              });
           });
       });
   });
 
-  it('should not be able to change user own password if wrong currentPassword is given', function (done) {
+  it('should not be able to change user own password if wrong currentPassword is given', function(done) {
     agent.post('/api/auth/signin')
       .send(credentials)
       .expect(200)
-      .end(function (signinErr, signinRes) {
+      .end(function(err, res) {
         // Handle signin error
-        if (signinErr) {
-          return done(signinErr);
+        if (err) {
+          return done(err);
         }
 
         // Change password
@@ -513,25 +788,46 @@ describe('User CRUD tests', function () {
             currentPassword: 'some_wrong_passwordAa$'
           })
           .expect(400)
-          .end(function (err, res) {
+          .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
             res.body.message.should.equal('Current password is incorrect');
-            return done();
+
+            // Sign out
+            agent
+              .get('/api/auth/signout')
+              .expect(302)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                res.redirect.should.equal(true);
+
+                // NodeJS v4 changed the status code representation so we must check
+                // before asserting, to be comptabile with all node versions.
+                if (process.version.indexOf('v4') === 0) {
+                  res.text.should.equal('Found. Redirecting to /');
+                } else {
+                  res.text.should.equal('Moved Temporarily. Redirecting to /');
+                }
+
+                return done();
+              });
           });
       });
   });
 
-  it('should not be able to change user own password if no new password is at all given', function (done) {
+  it('should not be able to change user own password if no new password is at all given', function(done) {
     agent.post('/api/auth/signin')
       .send(credentials)
       .expect(200)
-      .end(function (signinErr, signinRes) {
+      .end(function(err, res) {
         // Handle signin error
-        if (signinErr) {
-          return done(signinErr);
+        if (err) {
+          return done(err);
         }
 
         // Change password
@@ -542,19 +838,39 @@ describe('User CRUD tests', function () {
             currentPassword: credentials.password
           })
           .expect(400)
-          .end(function (err, res) {
+          .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
             res.body.message.should.equal('Please provide a new password');
-            return done();
+
+            // Sign out
+            agent
+              .get('/api/auth/signout')
+              .expect(302)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                res.redirect.should.equal(true);
+
+                // NodeJS v4 changed the status code representation so we must check
+                // before asserting, to be comptabile with all node versions.
+                if (process.version.indexOf('v4') === 0) {
+                  res.text.should.equal('Found. Redirecting to /');
+                } else {
+                  res.text.should.equal('Moved Temporarily. Redirecting to /');
+                }
+
+                return done();
+              });
           });
       });
   });
 
-  it('should not be able to change user own password if no new password is at all given', function (done) {
-
+  it('should not be able to change user own password if no new password is at all given', function(done) {
     // Change password
     agent.post('/api/users/password')
       .send({
@@ -563,30 +879,51 @@ describe('User CRUD tests', function () {
         currentPassword: credentials.password
       })
       .expect(400)
-      .end(function (err, res) {
+      .end(function(err, res) {
         if (err) {
           return done(err);
         }
 
         res.body.message.should.equal('User is not signed in');
-        return done();
+
+        // Sign out
+        agent
+          .get('/api/auth/signout')
+          .expect(302)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            res.redirect.should.equal(true);
+
+            // NodeJS v4 changed the status code representation so we must check
+            // before asserting, to be comptabile with all node versions.
+            if (process.version.indexOf('v4') === 0) {
+              res.text.should.equal('Found. Redirecting to /');
+            } else {
+              res.text.should.equal('Moved Temporarily. Redirecting to /');
+            }
+
+            return done();
+          });
       });
   });
 
-  it('should be able to get own user details successfully', function (done) {
+  it('should be able to get own user details successfully', function(done) {
     agent.post('/api/auth/signin')
       .send(credentials)
       .expect(200)
-      .end(function (signinErr, signinRes) {
+      .end(function(err, res) {
         // Handle signin error
-        if (signinErr) {
-          return done(signinErr);
+        if (err) {
+          return done(err);
         }
 
         // Get own user details
         agent.get('/api/users/me')
           .expect(200)
-          .end(function (err, res) {
+          .end(function(err, res) {
             if (err) {
               return done(err);
             }
@@ -594,253 +931,269 @@ describe('User CRUD tests', function () {
             res.body.should.be.instanceof(Object);
             res.body.username.should.equal(user.username);
             res.body.email.should.equal(user.email);
-            should.not.exist(res.body.salt);
-            should.not.exist(res.body.password);
-            return done();
+
+            // Sign out
+            agent
+              .get('/api/auth/signout')
+              .expect(302)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                res.redirect.should.equal(true);
+
+                // NodeJS v4 changed the status code representation so we must check
+                // before asserting, to be comptabile with all node versions.
+                if (process.version.indexOf('v4') === 0) {
+                  res.text.should.equal('Found. Redirecting to /');
+                } else {
+                  res.text.should.equal('Moved Temporarily. Redirecting to /');
+                }
+
+                return done();
+              });
           });
       });
   });
 
-  it('should not be able to get any user details if not logged in', function (done) {
+  it('should not be able to get any user details if not logged in', function(done) {
     // Get own user details
     agent.get('/api/users/me')
       .expect(200)
-      .end(function (err, res) {
+      .end(function(err, res) {
         if (err) {
           return done(err);
         }
 
         should.not.exist(res.body);
+
         return done();
       });
   });
 
-  it('should be able to update own user details', function (done) {
-    user.roles = ['user'];
+  it('should not be able to update own user roles if not admin', function(done) {
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRole(roleUser)
+          .then(function() {
 
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/signin')
-        .send(credentials)
-        .expect(200)
-        .end(function (signinErr, signinRes) {
-          // Handle signin error
-          if (signinErr) {
-            return done(signinErr);
-          }
+            // Sign in 
+            agent
+              .post('/api/auth/signin')
+              .send(credentials)
+              .expect(200)
+              .end(function(err, res) {
+                // Handle signin error
+                if (err) {
+                  return done(err);
+                }
 
-          var userUpdate = {
-            firstName: 'user_update_first',
-            lastName: 'user_update_last',
-          };
+                var update = {
+                  roles: [1, 2]
+                };
 
-          agent.put('/api/users')
-            .send(userUpdate)
-            .expect(200)
-            .end(function (userInfoErr, userInfoRes) {
-              if (userInfoErr) {
-                return done(userInfoErr);
-              }
+                // Update user roles
+                agent
+                  .put('/api/users/admin/' + user.id)
+                  .send(update)
+                  .expect(403)
+                  .end(function(err, res) {
 
-              userInfoRes.body.should.be.instanceof(Object);
-              userInfoRes.body.firstName.should.be.equal('user_update_first');
-              userInfoRes.body.lastName.should.be.equal('user_update_last');
-              userInfoRes.body.roles.should.be.instanceof(Array).and.have.lengthOf(1);
-              userInfoRes.body.roles.indexOf('user').should.equal(0);
-              userInfoRes.body._id.should.be.equal(String(user._id));
+                    if (err) {
+                      return done(err);
+                    }
 
-              // Call the assertion callback
-              return done();
-            });
-        });
-    });
+                    res.body.message.should.equal('User is not authorized');
+
+                    // Sign out
+                    agent
+                      .get('/api/auth/signout')
+                      .expect(302)
+                      .end(function(err, res) {
+                        if (err) {
+                          return done(err);
+                        }
+
+                        res.redirect.should.equal(true);
+
+                        // NodeJS v4 changed the status code representation so we must check
+                        // before asserting, to be comptabile with all node versions.
+                        if (process.version.indexOf('v4') === 0) {
+                          res.text.should.equal('Found. Redirecting to /');
+                        } else {
+                          res.text.should.equal('Moved Temporarily. Redirecting to /');
+                        }
+
+                        return done();
+                      });
+                  });
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
   });
 
-  it('should not be able to update own user details and add roles if not admin', function (done) {
-    user.roles = ['user'];
+  it('should not be able to update own user details with existing username', function(done) {
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRoles([roleAdmin, roleUser])
+          .then(function() {
 
-    user.save(function (err) {
-      should.not.exist(err);
-      agent.post('/api/auth/signin')
-        .send(credentials)
-        .expect(200)
-        .end(function (signinErr, signinRes) {
-          // Handle signin error
-          if (signinErr) {
-            return done(signinErr);
-          }
+            // Sign in 
+            agent
+              .post('/api/auth/signin')
+              .send(credentials)
+              .expect(200)
+              .end(function(err, res) {
+                // Handle signin error
+                if (err) {
+                  return done(err);
+                }
 
-          var userUpdate = {
-            firstName: 'user_update_first',
-            lastName: 'user_update_last',
-            roles: ['user', 'admin']
-          };
+                var update = {
+                  username: 'register_newdata'
+                };
 
-          agent.put('/api/users')
-            .send(userUpdate)
-            .expect(200)
-            .end(function (userInfoErr, userInfoRes) {
-              if (userInfoErr) {
-                return done(userInfoErr);
-              }
+                // Update user
+                agent
+                  .put('/api/users')
+                  .send(update)
+                  .expect(400)
+                  .end(function(err, res) {
 
-              userInfoRes.body.should.be.instanceof(Object);
-              userInfoRes.body.firstName.should.be.equal('user_update_first');
-              userInfoRes.body.lastName.should.be.equal('user_update_last');
-              userInfoRes.body.roles.should.be.instanceof(Array).and.have.lengthOf(1);
-              userInfoRes.body.roles.indexOf('user').should.equal(0);
-              userInfoRes.body._id.should.be.equal(String(user._id));
+                    if (err) {
+                      return done(err);
+                    }
 
-              // Call the assertion callback
-              return done();
-            });
-        });
-    });
+                    res.body.message.should.equal('username must be unique');
+
+                    // Sign out
+                    agent
+                      .get('/api/auth/signout')
+                      .expect(302)
+                      .end(function(err, res) {
+                        if (err) {
+                          return done(err);
+                        }
+
+                        res.redirect.should.equal(true);
+
+                        // NodeJS v4 changed the status code representation so we must check
+                        // before asserting, to be comptabile with all node versions.
+                        if (process.version.indexOf('v4') === 0) {
+                          res.text.should.equal('Found. Redirecting to /');
+                        } else {
+                          res.text.should.equal('Moved Temporarily. Redirecting to /');
+                        }
+
+                        return done();
+                      });
+                  });
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
   });
 
-  it('should not be able to update own user details with existing username', function (done) {
+  it('should not be able to update own user details with existing email address', function(done) {
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRoles([roleAdmin, roleUser])
+          .then(function() {
 
-    var _user2 = _user;
+            // Sign in 
+            agent
+              .post('/api/auth/signin')
+              .send(credentials)
+              .expect(200)
+              .end(function(err, res) {
+                // Handle signin error
+                if (err) {
+                  return done(err);
+                }
 
-    _user2.username = 'user2_username';
-    _user2.email = 'user2_email@test.com';
+                var update = {
+                  email: 'register_newdata_@test.com'
+                };
 
-    var credentials2 = {
-      username: 'username2',
-      password: 'M3@n.jsI$Aw3$0m3'
-    };
+                // Update user
+                agent
+                  .put('/api/users')
+                  .send(update)
+                  .expect(400)
+                  .end(function(err, res) {
 
-    _user2.username = credentials2.username;
-    _user2.password = credentials2.password;
+                    if (err) {
+                      return done(err);
+                    }
 
-    var user2 = new User(_user2);
+                    res.body.message.should.equal('email must be unique');
 
-    user2.save(function (err) {
-      should.not.exist(err);
+                    // Sign out
+                    agent
+                      .get('/api/auth/signout')
+                      .expect(302)
+                      .end(function(err, res) {
+                        if (err) {
+                          return done(err);
+                        }
 
-      agent.post('/api/auth/signin')
-        .send(credentials2)
-        .expect(200)
-        .end(function (signinErr, signinRes) {
-          // Handle signin error
-          if (signinErr) {
-            return done(signinErr);
-          }
+                        res.redirect.should.equal(true);
 
-          var userUpdate = {
-            firstName: 'user_update_first',
-            lastName: 'user_update_last',
-            username: user.username
-          };
+                        // NodeJS v4 changed the status code representation so we must check
+                        // before asserting, to be comptabile with all node versions.
+                        if (process.version.indexOf('v4') === 0) {
+                          res.text.should.equal('Found. Redirecting to /');
+                        } else {
+                          res.text.should.equal('Moved Temporarily. Redirecting to /');
+                        }
 
-          agent.put('/api/users')
-            .send(userUpdate)
-            .expect(400)
-            .end(function (userInfoErr, userInfoRes) {
-              if (userInfoErr) {
-                return done(userInfoErr);
-              }
-
-              // Call the assertion callback
-              userInfoRes.body.message.should.equal('Username already exists');
-
-              return done();
-            });
-        });
-    });
+                        return done();
+                      });
+                  });
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
   });
 
-  it('should not be able to update own user details with existing email', function (done) {
-
-    var _user2 = _user;
-
-    _user2.username = 'user2_username';
-    _user2.email = 'user2_email@test.com';
-
-    var credentials2 = {
-      username: 'username2',
-      password: 'M3@n.jsI$Aw3$0m3'
-    };
-
-    _user2.username = credentials2.username;
-    _user2.password = credentials2.password;
-
-    var user2 = new User(_user2);
-
-    user2.save(function (err) {
-      should.not.exist(err);
-
-      agent.post('/api/auth/signin')
-        .send(credentials2)
-        .expect(200)
-        .end(function (signinErr, signinRes) {
-          // Handle signin error
-          if (signinErr) {
-            return done(signinErr);
-          }
-
-          var userUpdate = {
-            firstName: 'user_update_first',
-            lastName: 'user_update_last',
-            email: user.email
-          };
-
-          agent.put('/api/users')
-            .send(userUpdate)
-            .expect(400)
-            .end(function (userInfoErr, userInfoRes) {
-              if (userInfoErr) {
-                return done(userInfoErr);
-              }
-
-              // Call the assertion callback
-              userInfoRes.body.message.should.equal('Email already exists');
-
-              return done();
-            });
-        });
-    });
-  });
-
-  it('should not be able to update own user details if not logged-in', function (done) {
-    user.roles = ['user'];
-
-    user.save(function (err) {
-
-      should.not.exist(err);
-
-      var userUpdate = {
-        firstName: 'user_update_first',
-        lastName: 'user_update_last',
-      };
-
-      agent.put('/api/users')
-        .send(userUpdate)
-        .expect(400)
-        .end(function (userInfoErr, userInfoRes) {
-          if (userInfoErr) {
-            return done(userInfoErr);
-          }
-
-          userInfoRes.body.message.should.equal('User is not signed in');
-
-          // Call the assertion callback
-          return done();
-        });
-    });
-  });
-
-  it('should not be able to update own user profile picture without being logged-in', function (done) {
-
+  it('should not be able to update own user profile picture without being logged in', function (done) {
+    // Update picture
     agent.post('/api/users/picture')
       .send({})
       .expect(400)
-      .end(function (userInfoErr, userInfoRes) {
-        if (userInfoErr) {
-          return done(userInfoErr);
+      .end(function (err, res) {
+
+        if (err) {
+          return done(err);
         }
 
-        userInfoRes.body.message.should.equal('User is not signed in');
+        res.body.message.should.equal('User is not signed in');
 
         // Call the assertion callback
         return done();
@@ -848,55 +1201,172 @@ describe('User CRUD tests', function () {
   });
 
   it('should be able to change profile picture if signed in', function (done) {
+    // Sign in
     agent.post('/api/auth/signin')
       .send(credentials)
       .expect(200)
-      .end(function (signinErr, signinRes) {
-        // Handle signin error
-        if (signinErr) {
-          return done(signinErr);
+      .end(function (err, res) {
+        
+        if (err) {
+          return done(err);
         }
-
+        // Update picture
         agent.post('/api/users/picture')
           .attach('newProfilePicture', './modules/users/client/img/profile/default.png')
           .send(credentials)
           .expect(200)
-          .end(function (userInfoErr, userInfoRes) {
+          .end(function (err, res) {
             // Handle change profile picture error
-            if (userInfoErr) {
-              return done(userInfoErr);
+            if (err) {
+              return done(err);
             }
 
-            userInfoRes.body.should.be.instanceof(Object);
-            userInfoRes.body.profileImageURL.should.be.a.String();
-            userInfoRes.body._id.should.be.equal(String(user._id));
+            res.body.should.be.instanceof(Object);
+            res.body.profileImageURL.should.be.a.String();
+            res.body.id.should.be.equal(user.id);
 
-            return done();
+            // Sign out
+            agent
+              .get('/api/auth/signout')
+              .expect(302)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                res.redirect.should.equal(true);
+
+                // NodeJS v4 changed the status code representation so we must check
+                // before asserting, to be comptabile with all node versions.
+                if (process.version.indexOf('v4') === 0) {
+                  res.text.should.equal('Found. Redirecting to /');
+                } else {
+                  res.text.should.equal('Moved Temporarily. Redirecting to /');
+                }
+
+                return done();
+              });
           });
       });
   });
 
   it('should not be able to change profile picture if attach a picture with a different field name', function (done) {
+    // Sign in
     agent.post('/api/auth/signin')
       .send(credentials)
       .expect(200)
-      .end(function (signinErr, signinRes) {
-        // Handle signin error
-        if (signinErr) {
-          return done(signinErr);
+      .end(function (err, res) {
+        
+        if (err) {
+          return done(err);
         }
 
         agent.post('/api/users/picture')
           .attach('fieldThatDoesntWork', './modules/users/client/img/profile/default.png')
           .send(credentials)
           .expect(400)
-          .end(function (userInfoErr, userInfoRes) {
-            done(userInfoErr);
+          .end(function (err, res) {
+
+            // Sign out
+            agent
+              .get('/api/auth/signout')
+              .expect(302)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                res.redirect.should.equal(true);
+
+                // NodeJS v4 changed the status code representation so we must check
+                // before asserting, to be comptabile with all node versions.
+                if (process.version.indexOf('v4') === 0) {
+                  res.text.should.equal('Found. Redirecting to /');
+                } else {
+                  res.text.should.equal('Moved Temporarily. Redirecting to /');
+                }
+
+                done();
+              });
           });
       });
   });
 
-  afterEach(function (done) {
-    User.remove().exec(done);
+  it('should be able to delete a single user if admin', function(done) {
+    // Save user
+    user
+      .save()
+      .then(function(user) {
+        user
+          .addRoles([roleAdmin, roleUser])
+          .then(function() {
+
+            // Sign in 
+            agent
+              .post('/api/auth/signin')
+              .send(credentials)
+              .expect(200)
+              .end(function(err, res) {
+
+                if (err) {
+                  return done(err);
+                }
+
+                // Delete user
+                agent
+                  .delete('/api/users/admin/' + user.id)
+                  .expect(200)
+                  .end(function(err, res) {
+
+                    if (err) {
+                      return done(err);
+                    }
+
+                    res.body.should.be.instanceof(Object);
+                    res.body.id.should.be.equal(user.id);
+
+                    return done();
+                  });
+              });
+          })
+          .catch(function(err) {
+            should.not.exist(err);
+          });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
+  });
+
+  afterEach(function(done) {
+    user
+      .destroy()
+      .then(function() {
+        done();
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
+  });
+
+  after(function(done) {
+    db.User
+      .destroy({
+        where: {
+          displayName: 'Full Name'
+        }
+      })
+      .then(function() {
+        fs.emptyDir(path.resolve('./modules/users/client/img/profile/uploads'), function(err) {
+          if (err) {
+            console.error(err);
+          } else {
+            done();
+          }
+        });
+      })
+      .catch(function(err) {
+        should.not.exist(err);
+      });
   });
 });

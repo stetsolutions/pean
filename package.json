@@ -1,14 +1,14 @@
 {
-  "name": "meanjs",
-  "description": "Full-Stack JavaScript with MongoDB, Express, AngularJS, and Node.js.",
+  "name": "peanjs",
+  "description": "Full-Stack JavaScript with PostgreSQL, Express, AngularJS, and Node.js.",
   "version": "0.4.2",
-  "meanjs-version": "0.4.2",
+  "peanjs-version": "0.4.2",
   "private": false,
-  "author": "https://github.com/meanjs/mean/graphs/contributors",
+  "author": "https://github.com/meanjs/pean/graphs/contributors",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/meanjs/mean.git"
+    "url": "https://github.com/peanjs/pean.git"
   },
   "engines": {
     "node": ">=0.12.0",
@@ -28,7 +28,7 @@
     "chalk": "^1.1.0",
     "compression": "^1.5.0",
     "connect-flash": "~0.1.1",
-    "connect-mongo": "~0.8.1",
+    "connect-session-sequelize": "^2.3.1",
     "consolidate": "~0.13.1",
     "cookie-parser": "^1.3.2",
     "crypto": "0.0.3",
@@ -45,7 +45,7 @@
     "lodash": "^3.10.0",
     "method-override": "^2.3.3",
     "mocha": "~1.20.0",
-    "mongoose": "~4.2.3",
+    "moment": "^2.10.6",
     "morgan": "^1.6.1",
     "multer": "~1.0.5",
     "nodemailer": "^1.4.0",
@@ -58,7 +58,10 @@
     "passport-local": "^1.0.0",
     "passport-paypal-openidconnect": "^0.1.1",
     "passport-twitter": "^1.0.2",
+    "pg": "^4.4.3",
+    "pg-hstore": "^2.3.2",
     "phantomjs": ">=1.9.0",
+    "sequelize": "3.13.0",
     "serve-favicon": "^2.3.0",
     "socket.io": "^1.3.7",
     "swig": "^1.4.2",
