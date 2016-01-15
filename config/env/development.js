@@ -75,7 +75,7 @@ module.exports = {
     }
   },
   livereload: true,
-  roles: ['user', 'admin'],
+  roles: ['admin', 'guest', 'user'],
   seedDB: {
     seed: process.env.DB_SEED === 'true' ? true : false,
     options: {

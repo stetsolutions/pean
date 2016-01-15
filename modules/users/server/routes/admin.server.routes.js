@@ -9,12 +9,14 @@ var adminPolicy = require('../policies/admin.server.policy'),
 module.exports = function(app) {
   // User route registration first. Ref: #713
   require('./users.server.routes.js')(app);
-
+  
+  // Users collection routes
   app.route('/api/users/admin')
-    .delete(users.delete)
-    .get(users.list)
-    .put(users.modify);
+    .get(adminPolicy.isAllowed, users.list);
 
-  // Finish by binding the user middleware
-  app.param('userId', users.userByID);
+  // Single user routes
+  app.route('/api/users/admin/:userId')
+    .delete(adminPolicy.isAllowed, users.delete)
+    .get(adminPolicy.isAllowed, users.read)
+    .put(adminPolicy.isAllowed, users.modify);
 };

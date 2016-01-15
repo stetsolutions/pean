@@ -50,8 +50,6 @@ exports.update = function(req, res) {
           });
       })
       .catch(function(err) {
-        console.log(err);
-
         return res.status(400).send({
           message: errorHandler.getErrorMessage(err)
         });

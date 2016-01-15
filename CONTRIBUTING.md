@@ -1,14 +1,14 @@
 # How to contribute
 
 Support and contributions from the open source community are essential for keeping
-MEAN.js up to date and always improving! There are a few guidelines that we need
+PEAN.js up to date and always improving! There are a few guidelines that we need
 contributors to follow to keep the project consistent, as well as allow us to keep
-maintaining MEAN.js in a reasonable amount of time.
+maintaining PEAN.js in a reasonable amount of time.
 
 ## Creating an Issue
 
 Before you create a new Issue:
-* Check the [Issues](https://github.com/meanjs/mean/issues) on Github to ensure one doesn't already exist.
+* Check the [Issues](https://github.com/StetSolutions/pean/issues) on Github to ensure one doesn't already exist.
 * Clearly describe the issue, including the steps to reproduce the issue.
 * If it's a new feature, enhancement, or restructure, Explain your reasoning on why you think it should be added, as well as a particular use case.
 
@@ -52,7 +52,7 @@ Fixes #82
 ```
 
 * Types: 
-  * feat - Features, Enhancements, and overall Improvements
+  * feature - Features, Enhancements, and overall Improvements
   * fix - Fixes, Bugs, HotFixs, etc...
   * doc - Changes to the Documentation and doesn't actually touch any code.
 * Scope:
@@ -68,15 +68,15 @@ Fixes #82
 ## Submitting the Pull Request
 
 * Push your changes to your topic branch on your fork of the repo.
-* Submit a pull request from your topic branch to the master branch on the MEAN.JS repository.
+* Submit a pull request from your topic branch to the master branch on the PEAN.JS repository.
 * Be sure to tag any issues your pull request is taking care of / contributing to.
 	* By adding "Closes #xyz" to a commit message will auto close the issue once the pull request is merged in.
 * Small changes are usually accepted and merged in within a week (provided that 2 collaborators give the okay)
 * Larger changes usually spark further discussion and possible changes prior to being merged in.
 
-## Documentation (meanjs.org)
+## Documentation
 
-The code for the documentation and the website are located in the meanjs/mean repo on the gh-pages branch. The website is hosted by github pages and generated using jekyll. See the README in the gh-pages branch for more information on how to get your dev enviorment set-up.
+PEAN Wiki. Wikis provide a place in your repository to lay out the roadmap of your project, show the current status, and document software better, together.
 
 ## Generating a new Release
 

@@ -18,11 +18,16 @@ module.exports.init = function init(callback) {
   }).then(function (db) {
     var app = express.init(db);
 
-    if (config.seedDB && config.seedDB.seed) {
-      console.log(chalk.bold.red('Warning:  Database seeding is turned on'));
-      seed.start();
-    }
-
+    // Seed
+    seed
+      .setup()
+      .then(function() {
+        if (config.seedDB && config.seedDB.seed) {
+          console.log(chalk.bold.red('Warning:  Database seeding is turned on'));
+          seed.start();
+        }
+      });
+    
     if (callback) {
       callback(app, db, config);
     }
@@ -41,15 +46,15 @@ module.exports.start = function start(callback) {
       // Logging initialization
       console.log('--');
       console.log(chalk.green(config.app.title));
-      console.log(chalk.green('Environment:\t\t\t' + process.env.NODE_ENV));
-      console.log(chalk.green('Port:\t\t\t\t' + config.port));
-      console.log(chalk.green('Database:\t\t\t\t' + config.db.options.name));
+      console.log(chalk.green('Environment: ' + process.env.NODE_ENV));
+      console.log(chalk.green('Port: ' + config.port));
+      console.log(chalk.green('Database: ' + config.db.options.name));
       if (process.env.NODE_ENV === 'secure') {
-        console.log(chalk.green('HTTPs:\t\t\t\ton'));
+        console.log(chalk.green('HTTPs: on'));
       }
-      console.log(chalk.green('App version:\t\t\t' + config.peanjs.version));
+      console.log(chalk.green('App version: ' + config.peanjs.version));
       if (config.peanjs['peanjs-version']) {
-        console.log(chalk.green('PEAN.JS version:\t\t\t' + config.peanjs['peanjs-version']));
+        console.log(chalk.green('PEAN.JS version: ' + config.peanjs['peanjs-version']));
         console.log('--');
       }
       if (callback) callback(app, db, config);

@@ -7,6 +7,9 @@ var crypto = require('crypto'),
 
 /**
  * Hash password
+ * @param  {[type]} user     [description]
+ * @param  {[type]} password [description]
+ * @return {[type]}          [description]
  */
 var hashPassword = function(user, password) {
   if (!password) {
@@ -20,16 +23,58 @@ var hashPassword = function(user, password) {
   }
 };
 
+/**
+ * Check image
+ * @param  {[type]} user [description]
+ * @return {[type]}      [description]
+ */
+var checkImage = function(user) {
+  var profileImageURLDefault = 'modules/users/client/img/profile/default.png';
+
+  if (!user.dataValues.profileImageURL) {
+    user.dataValues.profileImageURL = profileImageURLDefault;
+  }
+};
+
+/**
+ * Check password
+ * @param  {[type]} user [description]
+ * @return {[type]}      [description]
+ */
+var checkPassword = function(user) {
+  var passwordTest = owasp.test(user.password);
+
+  if (passwordTest.errors.length) {
+    var error = passwordTest.errors.join(' ');
+    throw new Error(error);
+  } else {
+    user.dataValues.salt = crypto.randomBytes(16).toString('base64');
+    user.dataValues.password = hashPassword(user);
+  }
+};
+
+/**
+ * Exports
+ * @param  {[type]} sequelize [description]
+ * @param  {[type]} DataTypes [description]
+ * @return {[type]}           [description]
+ */
 module.exports = function(sequelize, DataTypes) {
 
   var User = sequelize.define('User', {
     firstName: {
       allowNull: false,
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      validate: {
+        notEmpty: true
+      }
     },
     lastName: {
       allowNull: false,
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      validate: {
+        notEmpty: true
+      }
     },
     displayName: DataTypes.STRING,
     email: {
@@ -51,13 +96,7 @@ module.exports = function(sequelize, DataTypes) {
         var isLocal = this.provider === 'local';
         return isLocal;
       },
-      type: DataTypes.STRING,
-      validate: {
-        len: {
-          args: [7],
-          msg: 'Password must be at least 7 characters long.'
-        }
-      }
+      type: DataTypes.STRING
     },
     salt: DataTypes.STRING,
     profileImageURL: {
@@ -80,11 +119,23 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     classMethods: {
+      /**
+       * Associate
+       * @param  {[type]} models [description]
+       * @return {[type]}        [description]
+       */
       associate: function(models) {
         User.belongsToMany(models.Role, {
           through: 'UserRole'
         });
       },
+      /**
+       * Find unique username
+       * @param  {[type]}   username [description]
+       * @param  {[type]}   suffix   [description]
+       * @param  {Function} callback [description]
+       * @return {[type]}            [description]
+       */
       findUniqueUsername: function(username, suffix, callback) {
         var _this = this;
         var possibleUsername = username.toLowerCase() + (suffix || '');
@@ -107,6 +158,10 @@ module.exports = function(sequelize, DataTypes) {
             callback(null);
           });
       },
+      /**
+       * Generate random passphrase
+       * @return {[type]} [description]
+       */
       generateRandomPassphrase: function() {
         return new Promise(function(resolve, reject) {
           var password = '';
@@ -139,6 +194,12 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     instanceMethods: {
+      /**
+       * Authenticate
+       * @param  {[type]} user     [description]
+       * @param  {[type]} password [description]
+       * @return {[type]}          [description]
+       */
       authenticate: function(user, password) {
         return user.dataValues.password === hashPassword(user, password);
       }
@@ -147,39 +208,33 @@ module.exports = function(sequelize, DataTypes) {
 
   /**
    * Before create
+   * @param  {[type]} user     [description]
+   * @param  {[type]} options) { checkImage(user); checkPassword(user); } [description]
+   * @return {[type]}          [description]
    */
   User.beforeCreate(function(user, options) {
-    var profileImageURLDefault = 'modules/users/client/img/profile/default.png';
-
     if (!user.dataValues.profileImageURL) {
-      user.dataValues.profileImageURL = profileImageURLDefault;
+      checkImage(user);
     }
 
-    if (user.dataValues.password && user._changed.password && user.dataValues.password.length > 6) {
-      user.dataValues.salt = crypto.randomBytes(16).toString('base64');
-      user.dataValues.password = hashPassword(user);
-    } else {
-      user.dataValues.salt = null;
-      user.dataValues.password = null;
+    if (user.dataValues.password && user._changed.password) {
+      checkPassword(user);
     }
   });
 
   /**
    * Before update
+   * @param  {[type]} user     [description]
+   * @param  {[type]} options) { checkImage(user); checkPassword(user); } [description]
+   * @return {[type]}          [description]
    */
   User.beforeUpdate(function(user, options) {
-    var profileImageURLDefault = 'modules/users/client/img/profile/default.png';
-
     if (!user.dataValues.profileImageURL) {
-      user.dataValues.profileImageURL = profileImageURLDefault;
+      checkImage(user);
     }
 
-    if (user.dataValues.password && user._changed.password && user.dataValues.password.length > 6) {
-      user.dataValues.salt = crypto.randomBytes(16).toString('base64');
-      user.dataValues.password = hashPassword(user);
-    } else {
-      user.dataValues.salt = null;
-      user.dataValues.password = null;
+    if (user.dataValues.password && user._changed.password) {
+      checkPassword(user);
     }
   });
 

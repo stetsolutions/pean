@@ -28,7 +28,7 @@ exports.signup = function(req, res) {
   var provider = 'local';
   var displayName = req.body.firstName + ' ' + req.body.lastName;
 
-  // Then save the user
+  // Save user
   db.User
     .create({
       firstName: req.body.firstName,
@@ -46,23 +46,46 @@ exports.signup = function(req, res) {
       resetPasswordExpires: null
     })
     .then(function(user) {
-      user.addRoles([1]);
-      user.dataValues.roles = ['guest'];
+      // Find role
+      db.Role
+        .findOne({
+          where: {
+            role: 'user'
+          }
+        })
+        .then(function(role) {
+          // Add role
+          user
+            .addRoles(role)
+            .then(function(role) {
 
-      user.dataValues.password = null;
-      user.dataValues.salt = null;
+              user.dataValues.roles = ['user'];
 
-      user._previousDataValues.password = null;
-      user._previousDataValues.salt = null;
+              user.dataValues.password = null;
+              user.dataValues.salt = null;
 
-      req.login(user, function(err) {
-        if (err) {
-          res.status(400).send(err);
-        } else {
-          console.log(user);
-          res.json(user);
-        }
-      });
+              user._previousDataValues.password = null;
+              user._previousDataValues.salt = null;
+              // Login
+              req.login(user, function(err) {
+                if (err) {
+                  res.status(400).send(err);
+                } else {
+                  res.json(user);
+                }
+              });
+            })
+            .catch(function(err) {
+              return res.status(400).send({
+                message: errorHandler.getErrorMessage(err)
+              });
+            });
+        })
+        .catch(function(err) {
+          return res.status(400).send({
+            message: errorHandler.getErrorMessage(err)
+          });
+        });
     })
     .catch(function(err) {
       return res.status(400).send({
@@ -79,13 +102,6 @@ exports.signin = function(req, res, next) {
     if (err || !user) {
       res.status(400).send(info);
     } else {
-      // Remove sensitive data before login
-      user.dataValues.password = null;
-      user.dataValues.salt = null;
-
-      user._previousDataValues.password = null;
-      user._previousDataValues.salt = null;
-
       req.login(user, function(err) {
         if (err) {
           res.status(400).send(err);
@@ -214,10 +230,23 @@ exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
                   providerData: providerUserProfile.providerData
                 })
                 .then(function(user) {
-                  user
-                    .addRoles([1])
-                    .then(function(roles) {
-                      return done(null, user);
+
+                  db.Role
+                    .findOne({
+                      where: {
+                        role: 'user'
+                      }
+                    })
+                    .then(function(role) {
+                      // Add role
+                      user
+                        .addRoles(role)
+                        .then(function(role) {
+                          return done(null, user);
+                        })
+                        .catch(function(err) {
+                          return done(err);
+                        });
                     })
                     .catch(function(err) {
                       return done(err);

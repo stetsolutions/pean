@@ -114,14 +114,9 @@ angular.module('users').controller('UsersController', [
 
       if (user) {
 
-        var params = {
-          userId: user.id
-        };
-
         $http({
-          url: 'api/users/admin',
-          method: 'DELETE',
-          params: params
+          url: 'api/users/admin/' + user.id,
+          method: 'DELETE'
         }).success(function(data) {
           console.log(data);
         });

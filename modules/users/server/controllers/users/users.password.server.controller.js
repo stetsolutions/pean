@@ -19,7 +19,6 @@ var smtpTransport = nodemailer.createTransport(config.mailer.options);
  * Forgot for reset password (forgot POST)
  */
 exports.forgot = function(req, res, next) {
-
   async.waterfall([
 
     // Generate random token
@@ -40,14 +39,8 @@ exports.forgot = function(req, res, next) {
             }
           })
           .then(function(user) {
-            user.password = undefined;
-            user.salt = undefined;
-
-            if (!user) {
-              return res.status(400).send({
-                message: 'No account with that username has been found'
-              });
-            } else if (user.provider !== 'local') {
+            
+            if (user.provider !== 'local') {
               return res.status(400).send({
                 message: 'It seems like you signed up using your ' + user.provider + ' account'
               });
@@ -69,7 +62,7 @@ exports.forgot = function(req, res, next) {
           })
           .catch(function(err) {
             return res.status(400).send({
-              message: errorHandler.getErrorMessage(err)
+              message: 'No account with that username has been found'
             });
           });
       } else {

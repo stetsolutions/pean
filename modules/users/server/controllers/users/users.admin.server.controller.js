@@ -12,6 +12,33 @@ var path = require('path'),
 chalk.enabled = true;
 
 /**
+ * Show the current user
+ */
+exports.read = function (req, res) {
+  // console.log('* user.server.controller - read *');
+
+  var userId = req.params.userId;
+  
+  db.User
+    .findOne({
+      where: {
+        id: userId
+      },
+      include: [{
+        all: true
+      }],
+    })
+    .then(function(user) {
+      res.json(user);
+    })
+    .catch(function(err) {
+      return res.status(400).send({
+        message: errorHandler.getErrorMessage(err)
+      });
+    });
+};
+
+/**
  * Delete
  * @param req
  * @param res
@@ -19,7 +46,7 @@ chalk.enabled = true;
 exports.delete = function(req, res) {
   // console.log('* user.server.controller - delete *');
 
-  var userId = req.query.userId;
+  var userId = req.params.userId;
 
   db.User
     .findOne({
@@ -113,9 +140,9 @@ exports.list = function(req, res) {
  * @param res
  */
 exports.modify = function(req, res) {
-  // console.log('* user.server.controller - modify *');
+  console.log('* user.server.controller - modify *');
 
-  var userId = req.query.userId;
+  var userId = req.params.userId;
   var roles = req.query.roles;
 
   if (!roles) {
@@ -160,41 +187,6 @@ exports.modify = function(req, res) {
             message: errorHandler.getErrorMessage(err)
           });
         });
-    })
-    .catch(function(err) {
-      return res.status(400).send({
-        message: errorHandler.getErrorMessage(err)
-      });
-    });
-};
-
-/**
- * User by ID
- * [userByID description]
- * @param  {[type]}   req  [description]
- * @param  {[type]}   res  [description]
- * @param  {Function} next [description]
- * @param  {[type]}   id   [description]
- * @return {[type]}        [description]
- */
-exports.userByID = function(req, res, next, id) {
-  // console.log('* user.server.controller - userByID *');
-  // 
-  db.User
-    .findOne({
-      where: {
-        id: id
-      },
-      include: [{
-        all: true
-      }],
-    })
-    .then(function(user) {
-      if (user) {
-        req.user = user;
-      } else {
-        return next(new Error('Failed to load user ' + id));
-      }
     })
     .catch(function(err) {
       return res.status(400).send({

@@ -115,7 +115,7 @@ function seedRoles(roles) {
  * 
  * Save the specified user with the password provided from the resolved promise.
  */
-function seedTheUser(user, roles) {
+function seedUser(user, roles) {
   return function(password) {
     return new Promise(function(resolve, reject) {
 
@@ -159,6 +159,21 @@ function reportError(reject) {
     reject(err);
   };
 }
+
+/**
+ * Setup
+ */
+module.exports.setup = function setup() {
+  return new Promise(function(resolve, reject) {
+    seedRoles(config.roles)
+    .then(function() {
+      resolve();
+    })
+    .catch(
+      reportError(reject)
+    );
+  });
+};
 
 /**
  * Start
@@ -208,8 +223,7 @@ module.exports.start = function start() {
     if (process.env.NODE_ENV === 'production') {
       // Add Admin account
       db.User.generateRandomPassphrase()
-        .then(seedRoles(config.roles))
-        .then(seedTheUser(adminAccount, adminRoles))
+        .then(seedUser(adminAccount, adminRoles))
         .then(function() {
           resolve();
         })
@@ -218,10 +232,9 @@ module.exports.start = function start() {
     } else {
       // Add both Admin and User account
       db.User.generateRandomPassphrase()
-        .then(seedRoles(config.roles))
-        .then(seedTheUser(userAccount, userRoles))
+        .then(seedUser(userAccount, userRoles))
         .then(db.User.generateRandomPassphrase)
-        .then(seedTheUser(adminAccount, adminRoles))
+        .then(seedUser(adminAccount, adminRoles))
         .then(function() {
           resolve();
         })

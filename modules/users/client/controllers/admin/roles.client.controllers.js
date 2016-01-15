@@ -73,22 +73,19 @@ angular.module('users').controller('RolesController', [
         rolesArray.push(roleId);
 
       } else {
-        console.log('pull');
         var index = rolesArray.indexOf(roleId);
         rolesArray.splice(index, 1);
       }
 
       var params = {
-        roles: rolesArray,
-        userId: user.id
+        roles: rolesArray
       };
 
       $http({
-        url: 'api/users/admin',
+        url: 'api/users/admin/' + user.id,
         method: 'PUT',
         params: params
       }).success(function(data) {
-        console.log(data);
         $rootScope.$emit('rolesUpdate');
         user = data;
       });
