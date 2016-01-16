@@ -36,6 +36,7 @@
     "express-session": "^1.11.3",
     "file-stream-rotator": "~0.0.6",
     "forever": "~0.14.2",
+    "fs-extra": "^0.26.4",
     "generate-password": "^1.1.1",
     "glob": "^5.0.13",
     "grunt": "0.4.5",

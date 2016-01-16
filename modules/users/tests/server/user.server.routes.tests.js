@@ -44,8 +44,6 @@ describe('User "routes" tests', function() {
       .catch(function(err) {
         return done(err);
       });
-
-    done();
   });
 
   beforeEach(function(done) {

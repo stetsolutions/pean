@@ -179,31 +179,21 @@ gulp.task('templatecache', function () {
 
 // Mocha tests task
 gulp.task('mocha', function (done) {
-  // Open mongoose connections
-  var mongoose = require('./config/lib/mongoose.js');
   var error;
 
-  // Connect mongoose
-  mongoose.connect(function () {
-    mongoose.loadModels();
-    // Run the tests
-    gulp.src(testAssets.tests.server)
-      .pipe(plugins.mocha({
-        reporter: 'spec',
-        timeout: 10000
-      }))
-      .on('error', function (err) {
-        // If an error occurs, save it
-        error = err;
-      })
-      .on('end', function () {
-        // When the tests are done, disconnect mongoose and pass the error state back to gulp
-        mongoose.disconnect(function () {
-          done(error);
-        });
-      });
-  });
-
+  // Run the tests
+  gulp.src(testAssets.tests.server)
+    .pipe(plugins.mocha({
+      reporter: 'spec',
+      timeout: 10000
+    }))
+    .on('error', function (err) {
+      // If an error occurs, save it
+      error = err;
+    })
+    .on('end', function () {
+      done(error);
+    });
 });
 
 // Karma test runner task
@@ -212,23 +202,6 @@ gulp.task('karma', function (done) {
     configFile: __dirname + '/karma.conf.js',
     singleRun: true
   }, done).start();
-});
-
-// Drops the MongoDB database, used in e2e testing
-gulp.task('dropdb', function (done) {
-  // Use mongoose configuration
-  var mongoose = require('./config/lib/mongoose.js');
-
-  mongoose.connect(function (db) {
-    db.connection.db.dropDatabase(function (err) {
-      if(err) {
-        console.log(err);
-      } else {
-        console.log('Successfully dropped db: ', db.connection.db.databaseName);
-      }
-      db.connection.db.close(done);
-    });
-  });
 });
 
 // Downloads the selenium webdriver
@@ -280,7 +253,7 @@ gulp.task('test:client', function (done) {
 });
 
 gulp.task('test:e2e', function (done) {
-  runSequence('env:test', 'lint', 'dropdb', 'nodemon', 'protractor', done);
+  runSequence('env:test', 'lint', 'nodemon', 'protractor', done);
 });
 
 // Run the project in development mode

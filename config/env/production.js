@@ -1,20 +1,13 @@
 'use strict';
 
 module.exports = {
-  secure: {
-    ssl: true,
-    privateKey: './config/sslcerts/key.pem',
-    certificate: './config/sslcerts/cert.pem'
-  },
-  port: process.env.PORT || 8443,
   db: {
-    uri: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://' + (process.env.DB_1_PORT_27017_TCP_ADDR || 'localhost') + '/mean',
     options: {
-      user: '',
-      pass: ''
+      name: '',
+      password: '',
+      user: ''
     },
-    // Enable mongoose debug mode
-    debug: process.env.MONGODB_DEBUG || false
+    sync: true
   },
   log: {
     // logging with Morgan - https://github.com/expressjs/morgan
@@ -34,6 +27,12 @@ module.exports = {
         }
       }
     }
+  },
+  port: process.env.PORT || 8443,
+  secure: {
+    ssl: true,
+    privateKey: './config/sslcerts/key.pem',
+    certificate: './config/sslcerts/cert.pem'
   },
   facebook: {
     clientID: process.env.FACEBOOK_ID || 'APP_ID',

@@ -232,8 +232,6 @@ for hosting applications in the cloud.  After you have an account follow the bel
   *  If you are using Pivotal Web Services run `$ cf login -a api.run.pivotal.io`.
   *  If you are using IBM Bluemix run `$ cf login -a api.ng.bluemix.net`.
 * Create a Mongo DB service.
-+  *  If you are using Pivotal Web Services run `$ cf create-service mongolab sandbox pean-mongo`
-+  *  If you are using IBM Bluemix run `$ cf create-service mongodb 100 pean-mongo`
 * Clone the GitHub repo for PEANJS if you have not already done so
   * `$ git clone https://github.com/StetSolutions/pean.git && cd pean`
 * Run `$ npm install`

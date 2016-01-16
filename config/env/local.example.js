@@ -19,10 +19,10 @@
 
 module.exports = {
   db: {
-    uri: 'mongodb://localhost/local-dev',
     options: {
-      user: '',
-      pass: ''
+      name: '',
+      pass: '',
+      user: ''
     }
   },
   sessionSecret: process.env.SESSION_SECRET || 'youshouldchangethistosomethingsecret',
