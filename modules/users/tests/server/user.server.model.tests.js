@@ -112,6 +112,7 @@ describe('User "model" Tests:', function() {
       })
       .catch(function(err) {
         should.exist(err);
+
         done();
       });
   });

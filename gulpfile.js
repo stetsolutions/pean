@@ -6,6 +6,7 @@
 var _ = require('lodash'),
   defaultAssets = require('./config/assets/default'),
   testAssets = require('./config/assets/test'),
+  glob = require('glob'),
   gulp = require('gulp'),
   gulpLoadPlugins = require('gulp-load-plugins'),
   runSequence = require('run-sequence'),
@@ -14,8 +15,10 @@ var _ = require('lodash'),
       'gulp-angular-templatecache': 'templateCache'
     }
   }),
+  pngquant = require('imagemin-pngquant'),
   path = require('path'),
   endOfLine = require('os').EOL,
+  argv = require('yargs').argv,
   protractor = require('gulp-protractor').protractor,
   webdriver_update = require('gulp-protractor').webdriver_update,
   webdriver_standalone = require('gulp-protractor').webdriver_standalone,
@@ -65,6 +68,35 @@ gulp.task('watch', function () {
   } else {
     gulp.watch(defaultAssets.server.gulpConfig, ['jshint']);
     gulp.watch(defaultAssets.client.views).on('change', plugins.livereload.changed);
+  }
+
+  if (process.env.NODE_ENV === 'test') {
+    // Add Server Test file rules
+    gulp.watch([testAssets.tests.server, defaultAssets.server.allJS], ['test:server']).on('change', function (file) {
+      var runOnlyChangedTestFile = argv.onlyChanged ? true : false;
+
+      // check if we should only run a changed test file
+      if (runOnlyChangedTestFile) {
+        var changedTestFiles = [];
+
+        // iterate through server test glob patterns
+        _.forEach(testAssets.tests.server, function (pattern) {
+          // determine if the changed (watched) file is a server test
+          _.forEach(glob.sync(pattern), function (f) {
+            var filePath = path.resolve(f);
+
+            if (filePath === path.resolve(file.path)) {
+              changedTestFiles.push(f);
+            }
+          });
+        });
+
+        // set task argument for tracking changed test files
+        argv.changedTestFiles = changedTestFiles;
+      }
+
+      plugins.livereload.changed();
+    });
   }
 });
 
@@ -159,6 +191,17 @@ gulp.task('less', function () {
     .pipe(gulp.dest('./modules/'));
 });
 
+// Imagemin task
+gulp.task('imagemin', function () {
+  return gulp.src(defaultAssets.client.img)
+    .pipe(plugins.imagemin({
+      progressive: true,
+      svgoPlugins: [{ removeViewBox: false }],
+      use: [pngquant()]
+    }))
+    .pipe(gulp.dest('public/dist/img'));
+});
+
 // Angular template cache task
 gulp.task('templatecache', function () {
   var re = new RegExp('\\' + path.sep + 'client\\' + path.sep, 'g');
@@ -246,6 +289,14 @@ gulp.task('test', function (done) {
 
 gulp.task('test:server', function (done) {
   runSequence('env:test', 'lint', 'mocha', done);
+});
+
+// Watch all server files for changes & run server tests (test:server) task on changes
+// optional arguments: 
+//    --onlyChanged - optional argument for specifying that only the tests in a changed Server Test file will be run
+// example usage: gulp test:server:watch --onlyChanged
+gulp.task('test:server:watch', function (done) {
+  runSequence('test:server', 'watch', done);
 });
 
 gulp.task('test:client', function (done) {
