@@ -16,7 +16,7 @@ exports.renderIndex = function (req, res) {
       username: validator.escape(req.user.username),
       createdAt: req.user.createdAt.toString(),
       roles: req.user.dataValues.roles,
-      profileImageURL: validator.escape(req.user.profileImageURL),
+      profileImageURL: req.user.profileImageURL,
       email: validator.escape(req.user.email),
       lastName: validator.escape(req.user.lastName),
       firstName: validator.escape(req.user.firstName)

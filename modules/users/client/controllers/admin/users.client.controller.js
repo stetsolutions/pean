@@ -43,8 +43,6 @@ angular.module('users').controller('UsersController', [
      * Find users
      */
     $scope.find = function() {
-      //console.log('users.client.find');
-
       var limit = $scope.pageSize;
       var offset = ($scope.currentPage - 1) * $scope.pageSize;
       var search = $scope.search;

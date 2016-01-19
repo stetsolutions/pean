@@ -24,14 +24,6 @@ angular.module('users').controller('RolesController', [
     _,
     user
   ) {
-    // $scope.roles = [{
-    //   id: 1,
-    //   label: 'User'
-    // }, {
-    //   id: 2,
-    //   label: 'Admin'
-    // }];
-
     $scope.user = user;
 
     /**
