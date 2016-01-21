@@ -1,12 +1,16 @@
+db:
+  image: postgres
+  ports:
+  - "5432:5432"
+  environment:
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
 web:
   build: .
   links:
-   - db
-  ports:
-   - "3000:3000"
+    - db
   environment: 
-   NODE_ENV: development
-db:
-  image: mongo
-  ports: 
-   - "27017:27017"
+    SEQ_DB: test
+    SEQ_USER: test
+    SEQ_PW: test
+    DATABASE_URL: postgres://username:test@db:5432
