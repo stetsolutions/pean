@@ -17,7 +17,7 @@ var roleAdmin, roleUser;
 /**
  * Unit tests
  */
-describe('Article Model Unit Tests:', function () {
+describe('Article "model" Tests:', function () {
 
   before(function(done) {
     user =
@@ -149,9 +149,6 @@ describe('Article Model Unit Tests:', function () {
 
     var limit = 10;
     var offset = 0;
-    //var search = 'user';
-
-    //var query = new RegExp(search, 'i');
 
     db.Article
       .findAll({
@@ -161,19 +158,6 @@ describe('Article Model Unit Tests:', function () {
         include: [
           db.User
         ],
-        // '$or': [{
-        //   firstName: query
-        // }, {
-        //   lastName: query
-        // }, {
-        //   displayName: query
-        // }, {
-        //   username: query
-        // }, {
-        //   email: query
-        // }, {
-        //   roles: query
-        // }],
         'limit': limit,
         'offset': offset,
         'order': [

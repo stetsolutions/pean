@@ -1,14 +1,8 @@
 'use strict';
 
 /**
- * Module dependencies
- */
-
-
-/**
  * Article Schema
  */
-
 module.exports = function(sequelize, DataTypes) {
 
   var Article = sequelize.define('Article', {

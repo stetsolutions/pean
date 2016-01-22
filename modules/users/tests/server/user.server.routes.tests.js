@@ -19,7 +19,7 @@ var roleAdmin, roleUser;
 /**
  * User routes tests
  */
-describe('User "routes" tests', function() {
+describe('User "routes" Tests:', function() {
 
   before(function(done) {
     // Get application

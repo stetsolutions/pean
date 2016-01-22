@@ -9,6 +9,7 @@ var _ = require('lodash'),
   fs = require('fs-extra'),
   request = require('supertest'),
   should = require('should');
+
 /**
  * Globals
  */
@@ -19,7 +20,7 @@ var roleAdmin, roleUser;
 /**
  * Article routes tests
  */
-describe('Article CRUD tests', function() {
+describe('Article "routes" Tests:', function() {
   before(function(done) {
     // Get application
     app = express.init(db.sequelize);

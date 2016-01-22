@@ -146,7 +146,7 @@ exports.list = function(req, res) {
  * @return {[type]}     [description]
  */
 exports.modify = function(req, res) {
-  console.log('* user.server.controller - modify *');
+  // console.log('* user.server.controller - modify *');
 
   var userId = req.params.userId;
   var roles = req.query.roles;
@@ -208,6 +208,8 @@ exports.modify = function(req, res) {
  * @return {[type]}     [description]
  */
 exports.roles = function (req, res) {
+  // console.log('* user.server.controller - roles *');
+  
   db.Role
     .findAll()
     .then(function(roles) {

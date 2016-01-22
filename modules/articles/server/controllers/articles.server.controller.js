@@ -11,16 +11,51 @@ var path = require('path'),
  * Create a article
  */
 exports.create = function(req, res) {
-  console.log('* articles.server.controller - create *');
+  // console.log('* articles.server.controller - create *');
 
   // save and return and instance of article on the res object. 
   db.Article.create({
     title: req.body.title,
     content: req.body.content,
     userId: req.user.id
-  })   
-    .then(function(newArticle) {
-      return res.json(newArticle);
+  })
+  .then(function(newArticle) {
+    return res.json(newArticle);
+  })
+  .catch(function(err) {
+    return res.status(400).send({
+      message: errorHandler.getErrorMessage(err)
+    });
+  });
+};
+
+/**
+ * Delete an article
+ */
+exports.delete = function(req, res) {
+  // console.log('* articles.server.controller - delete *');
+
+  var id = req.params.articleId;
+
+  db.Article
+    .findOne({
+      where: {
+        id: id
+      },
+      include: [
+        db.User
+      ]
+    })
+    .then(function(article) {
+      article.destroy()
+        .then(function() {
+          return res.json(article);
+        })
+        .catch(function(err) {
+          return res.status(400).send({
+            message: errorHandler.getErrorMessage(err)
+          });
+        });
     })
     .catch(function(err) {
       return res.status(400).send({
@@ -30,10 +65,32 @@ exports.create = function(req, res) {
 };
 
 /**
+ * List of Articles
+ */
+exports.list = function(req, res) {
+  // console.log('* articles.server.controller - list *');
+
+  db.Article.findAll({
+    include: [
+      db.User
+    ]
+  })
+  .then(function(articles) {
+    return res.json(articles);
+  })
+  .catch(function(err) {
+    return res.status(400).send({
+      message: errorHandler.getErrorMessage(err)
+    });
+  });
+};
+
+/**
  * Show the current article
  */
 exports.read = function(req, res) {
-  console.log('* articles.server.controller - read *');
+  // console.log('* articles.server.controller - read *');
+
   var id = req.params.articleId;
 
   db.Article.find({
@@ -57,9 +114,8 @@ exports.read = function(req, res) {
 /**
  * Update a article
  */
-
 exports.update = function(req, res) {
-  console.log('* articles.server.controller - update *');
+  // console.log('* articles.server.controller - update *');
 
   var id = req.params.articleId;
 
@@ -72,7 +128,7 @@ exports.update = function(req, res) {
         db.User
       ]
     })
-    .then(function(article){
+    .then(function(article) {
       article.updateAttributes({
         title: req.body.title,
         content: req.body.content
@@ -90,58 +146,5 @@ exports.update = function(req, res) {
       return res.status(400).send({
         message: errorHandler.getErrorMessage(err)
       });
-    }); 
-};
-
-/**
- * Delete an article
- */
-exports.delete = function(req, res) {
-  console.log('* articles.server.controller - delete *');
-  var id = req.params.articleId;
-
-  db.Article
-    .findOne({
-      where: {
-        id: id
-      },
-      include: [
-        db.User
-      ]
-    })
-    .then(function(article){
-      article.destroy()
-      .then(function() {
-        return res.json(article);
-      })
-      .catch(function(err) {
-        return res.status(400).send({
-          message: errorHandler.getErrorMessage(err)
-        });
-      });
-    })
-    .catch(function(err) {
-      return res.status(400).send({
-        message: errorHandler.getErrorMessage(err)
-      });
-    }); 
-};
-
-/**
- * List of Articles
- */
-exports.list = function(req, res) {
-  db.Article.findAll({
-    include: [
-      db.User
-    ]
-  })
-  .then(function(articles) {
-    return res.json(articles);
-  })
-  .catch(function(err) {
-    return res.status(400).send({
-      message: errorHandler.getErrorMessage(err)
     });
-  });
 };
