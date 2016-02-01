@@ -14,7 +14,7 @@ chalk.enabled = true;
 // Initialize Models
 module.exports.init = function init(callback) {
   sequelize.sequelize.sync({
-    force: config.db.sync
+    force: config.db.force
   }).then(function (db) {
     var app = express.init(db);
 

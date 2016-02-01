@@ -3,14 +3,6 @@
 var defaultEnvConfig = require('./default');
 
 module.exports = {
-  db: {
-    options: {
-      name: '',
-      password: '',
-      user: ''
-    },
-    sync: true
-  },
   log: {
     // logging with Morgan - https://github.com/expressjs/morgan
     // Can specify one of 'combined', 'common', 'dev', 'short', 'tiny'

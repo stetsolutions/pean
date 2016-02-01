@@ -20,10 +20,11 @@
 module.exports = {
   db: {
     options: {
-      name: '',
-      pass: '',
-      user: ''
-    }
+      database: 'oc_dev',
+      password: 'root',
+      username: 'root'
+    },
+    force: true
   },
   sessionSecret: process.env.SESSION_SECRET || 'youshouldchangethistosomethingsecret',
   facebook: {
@@ -32,4 +33,5 @@ module.exports = {
     callbackURL: '/api/auth/facebook/callback'
   }
 };
+
 */

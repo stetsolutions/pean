@@ -82,7 +82,19 @@ This command does a few things:
 * Finally, when the install process is over, npm will initiate a bower install command to install all the front-end modules needed for the application
 
 ## Running Your Application
-After the install process is over, you'll be able to run your application using Grunt, just run grunt default task:
+The first thing you will need to do is supply your PostgreSQL credentials.
+
+To do this, duplicate 'config/env/local.example.js' and rename the file 'config/env/local-development.js' (as instructed in the file itself). 
+
+If you have not done so already, create a PostgreSQL database (our example uses a database named 'oc_dev'). 
+
+Uncomment 'module.exports' in the 'local-development.js' file you just created and replace the 'db.options' properties with your own PostgreSQL database name, username and password. 
+
+Make sure that 'force' is set to 'true' (as in the example) in order that Sequelize generate your database tables for you.
+
+After you have provided your PostgreSQL credentials, you'll be able to run your application using Grunt. 
+
+Just run the Grunt default task:
 
 ```
 $ grunt
