@@ -18,7 +18,7 @@ module.exports = function() {
     db.User.findOne({
       where: {
         username: username
-      },
+      }
     })
     .then(function(user) {
       if (!user || !user.authenticate(user, password)) {
