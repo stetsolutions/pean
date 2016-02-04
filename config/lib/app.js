@@ -13,20 +13,29 @@ chalk.enabled = true;
 
 // Initialize Models
 module.exports.init = function init(callback) {
+
+  if (config.db.force) {
+    console.log(chalk.bold.red('Warning:\tSequelize option "force" is set to "true"'));  
+  }
+
+  if (config.seedDB.seed) {
+    config.db.force = true;
+  }
+
   sequelize.sequelize.sync({
     force: config.db.force
   }).then(function (db) {
     var app = express.init(db);
 
     // Seed
-    seed
-      .setup()
-      .then(function() {
-        if (config.seedDB && config.seedDB.seed) {
-          console.log(chalk.bold.red('Warning:  Database seeding is turned on'));
-          seed.start();
-        }
-      });
+    if (config.db.force) {  
+      seed.setup();
+    }
+    
+    if (config.seedDB.seed) {
+      console.log(chalk.bold.red('Warning:\tDatabase seeding is turned on'));
+      seed.start();
+    } 
     
     if (callback) {
       callback(app, db, config);
@@ -48,7 +57,7 @@ module.exports.start = function start(callback) {
       console.log(chalk.green(config.app.title));
       console.log(chalk.green('Environment: ' + process.env.NODE_ENV));
       console.log(chalk.green('Port: ' + config.port));
-      console.log(chalk.green('Database: ' + config.db.options.name));
+      console.log(chalk.green('Database: ' + config.db.options.database));
       if (process.env.NODE_ENV === 'secure') {
         console.log(chalk.green('HTTPs: on'));
       }

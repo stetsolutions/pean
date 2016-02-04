@@ -183,7 +183,7 @@ exports.reset = function(req, res, next) {
                       var roleArray = [];
 
                       _.forEach(roles, function(role) {
-                        roleArray.push(role.dataValues.role);
+                        roleArray.push(role.dataValues.name);
                       });
 
                       user.dataValues.roles = roleArray;

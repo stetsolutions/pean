@@ -60,9 +60,9 @@ describe('User "model" Tests:', function() {
       .then(function(roles) {
         
         _.each(roles, function(value) {
-          if (value.role === 'admin') {
+          if (value.name === 'admin') {
             roleAdmin = value.id;
-          } else if (value.role === 'user') {
+          } else if (value.name === 'user') {
             roleUser = value.id;
           }
         });

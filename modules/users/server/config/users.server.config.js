@@ -34,7 +34,7 @@ module.exports = function(app) {
               var roleArray = [];
 
               _.each(roles, function(role) {
-                roleArray.push(role.dataValues.role);
+                roleArray.push(role.dataValues.name);
               });
 
               user.dataValues.roles = roleArray;

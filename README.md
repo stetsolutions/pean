@@ -70,7 +70,7 @@ Once you've downloaded the boilerplate and installed all the prerequisites, you'
 
 The first thing you should do is install the Node.js dependencies. The boilerplate comes pre-bundled with a package.json file that contains the list of modules you need to start your application. To learn more about the modules installed visit the NPM & Package.json section.
 
-To install Node.js dependencies you're going to use npm again. In the application folder run this in the command-line:
+To install Node.js dependencies you're going to use npm again. In the application folder, run this from the command-line:
 
 ```bash
 $ npm install
@@ -79,22 +79,22 @@ $ npm install
 This command does a few things:
 * First it will install the dependencies needed for the application to run.
 * If you're running in a development environment, it will then also install development dependencies needed for testing and running your application.
-* Finally, when the install process is over, npm will initiate a bower install command to install all the front-end modules needed for the application
+* Finally, when the install process is over, npm will initiate a bower install command to install all the front-end modules needed for the application.
 
 ## Running Your Application
 The first thing you will need to do is supply your PostgreSQL credentials.
 
-To do this, duplicate 'config/env/local.example.js' and rename the file 'config/env/local-development.js' (as instructed in the file itself). 
+To do this, duplicate 'config/env/local.example.js' and rename the file 'config/env/local-development.js' (as instructed in the example file itself). 
 
-If you have not done so already, create a PostgreSQL database (our example uses a database named 'oc_dev'). 
+If you have not done so already, create a PostgreSQL database (our example uses a database named 'pean_dev'). 
 
 Uncomment 'module.exports' in the 'local-development.js' file you just created and replace the 'db.options' properties with your own PostgreSQL database name, username and password. 
 
-Make sure that 'force' is set to 'true' (as in the example) in order that Sequelize generate your database tables for you.
+Make sure that 'db.force' is set to 'true' (as in the example). When the Sequelize option 'force' is set to 'true', all tables are dropped and recreated everytime the server is started/restarted. Additionally, any roles defined in your configuration will be added to the 'Roles' table by the application.  
 
-After you have provided your PostgreSQL credentials, you'll be able to run your application using Grunt. 
+Now just run your application using Grunt. 
 
-Just run the Grunt default task:
+In the application folder, run this from the command-line:
 
 ```
 $ grunt
@@ -103,9 +103,11 @@ $ grunt
 Your application should run on port 3000 with the *development* environment configuration, so in your browser just go to [http://localhost:3000](http://localhost:3000)
 
 That's it! Your application should be running. To proceed with your development, check the other sections in this documentation.
+
 If you encounter any problems, try the Troubleshooting section.
 
-* explore `config/env/development.js` for development environment configuration options
+* Explore `config/env/development.js` for development environment configuration options.
+* Set 'force' to 'false' if you want to preserve your table data on server restart.  
 
 ### Running in Production mode
 To run your application with *production* environment configuration, execute grunt as follows:
@@ -114,7 +116,7 @@ To run your application with *production* environment configuration, execute gru
 $ grunt prod
 ```
 
-* explore `config/env/production.js` for production environment configuration options
+* Explore `config/env/production.js` for production environment configuration options.
 
 ### Running with User Seed
 To have default account(s) seeded at runtime:

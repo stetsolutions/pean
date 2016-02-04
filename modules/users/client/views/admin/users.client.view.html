@@ -70,7 +70,7 @@
                   ></td>
                   <td>
                     <span data-ng-repeat="Roles in user.Roles | orderBy:'role'">
-                    {{ Roles.role | capitalize: all }}{{ $last ? '' : ',&nbsp;'}}
+                    {{ Roles.name | capitalize: all }}{{ $last ? '' : ',&nbsp;'}}
                     </span>
                   </td>
                   <td data-ng-bind-html="user.displayName | capitalize: all"></td>
@@ -177,7 +177,7 @@
                           id="{{role.id}}"
                           type="checkbox"
                         />
-                        {{role.role}}
+                        {{role.name}}
                       </label>
                     </div>
                   </div>

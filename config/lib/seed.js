@@ -77,7 +77,7 @@ function reportSuccess(password) {
   return function(user) {
     return new Promise(function(resolve, reject) {
       if (seedOptions.logResults) {
-        console.log(chalk.bold.red('Database Seeding:\t\t\tLocal account "' + user.username + '" added with password set to ' + password));
+        console.log(chalk.bold.red('Database Seeding:\tLocal account "' + user.username + '" added with password set to ' + password));
       }
       resolve();
     });
@@ -93,7 +93,7 @@ function seedRoles(roles) {
 
     _.forEach(roles, function(value) {
       var role = {
-        'role': value
+        'name': value
       };
       rolesArray.push(role);
     });
@@ -164,14 +164,15 @@ function reportError(reject) {
  * Setup
  */
 module.exports.setup = function setup() {
+
   return new Promise(function(resolve, reject) {
     seedRoles(config.roles)
-    .then(function() {
-      resolve();
-    })
-    .catch(
-      reportError(reject)
-    );
+      .then(function() {
+        resolve();
+      })
+      .catch(
+        reportError(reject)
+      );
   });
 };
 

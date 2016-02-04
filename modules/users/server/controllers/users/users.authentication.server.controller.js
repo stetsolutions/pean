@@ -50,7 +50,7 @@ exports.signup = function(req, res) {
       db.Role
         .findOne({
           where: {
-            role: 'user'
+            name: 'user'
           }
         })
         .then(function(role) {
@@ -112,7 +112,7 @@ exports.signin = function(req, res, next) {
               var rolesArray = [];
 
               roles.map(function(dataValues) {
-                rolesArray.push(dataValues.role);
+                rolesArray.push(dataValues.name);
               });
 
               user.dataValues.roles = rolesArray;
