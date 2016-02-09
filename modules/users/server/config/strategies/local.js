@@ -27,10 +27,12 @@ module.exports = function() {
         });
       }
 
-      return done(null, user);
+      done(null, user);
+
+      return null;
     })
     .catch(function(err) {
-      return done(err);
+      done(err);
     });
   }));
 };

@@ -152,6 +152,8 @@ module.exports = function(sequelize, DataTypes) {
             } else {
               return _this.findUniqueUsername(username, (suffix || 0) + 1, callback);
             }
+
+            return null;
           })
           .catch(function(err) {
             console.log(err);

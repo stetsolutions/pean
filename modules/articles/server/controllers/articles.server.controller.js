@@ -56,6 +56,8 @@ exports.delete = function(req, res) {
             message: errorHandler.getErrorMessage(err)
           });
         });
+
+      return null;
     })
     .catch(function(err) {
       return res.status(400).send({
@@ -141,6 +143,8 @@ exports.update = function(req, res) {
           message: errorHandler.getErrorMessage(err)
         });
       });
+
+      return null;
     })
     .catch(function(err) {
       return res.status(400).send({

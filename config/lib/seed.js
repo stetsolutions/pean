@@ -38,6 +38,8 @@ function saveUser(user, roles) {
             .then(function() {
               resolve(user);
             });
+
+          return null;
         })
         .catch(function(err) {
           reject(new Error('Failed to add local ' + user.username));

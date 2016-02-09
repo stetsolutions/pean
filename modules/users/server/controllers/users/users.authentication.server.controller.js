@@ -69,23 +69,28 @@ exports.signup = function(req, res) {
               // Login
               req.login(user, function(err) {
                 if (err) {
-                  res.status(400).send(err);
+                  return res.status(400).send(err);
                 } else {
-                  res.json(user);
+                  return res.json(user);
                 }
               });
+
+              return null;
             })
             .catch(function(err) {
               return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
               });
             });
+          return null;
         })
         .catch(function(err) {
           return res.status(400).send({
             message: errorHandler.getErrorMessage(err)
           });
         });
+
+      return null;
     })
     .catch(function(err) {
       return res.status(400).send({
@@ -116,7 +121,8 @@ exports.signin = function(req, res, next) {
               });
 
               user.dataValues.roles = rolesArray;
-              res.json(user);
+
+              return res.json(user);
             })
             .catch(function(err) {
               return res.status(400).send({
@@ -157,7 +163,7 @@ exports.oauthCall = function(strategy, scope) {
 
 /**
  * OAuth callback
- // */
+ */
 exports.oauthCallback = function(strategy) {
   return function(req, res, next) {
     // Pop redirect URL from session
@@ -168,16 +174,19 @@ exports.oauthCallback = function(strategy) {
       if (err) {
         return res.redirect('/authentication/signin?err=' + encodeURIComponent(errorHandler.getErrorMessage(err)));
       }
+
       if (!user) {
         return res.redirect('/authentication/signin');
       }
+
       req.login(user, function(err) {
         if (err) {
           return res.redirect('/authentication/signin');
+        } else {
+          return res.redirect(redirectURL || sessionRedirectURL || '/');
         }
-
-        return res.redirect(redirectURL || sessionRedirectURL || '/');
       });
+
     })(req, res, next);
   };
 };
@@ -234,7 +243,7 @@ exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
                   db.Role
                     .findOne({
                       where: {
-                        role: 'user'
+                        name: 'user'
                       }
                     })
                     .then(function(role) {
@@ -242,25 +251,40 @@ exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
                       user
                         .addRoles(role)
                         .then(function(role) {
-                          return done(null, user);
+                          done(null, user);
+                          return null;
                         })
                         .catch(function(err) {
-                          return done(err);
+                          done(err);
+                          return null;
                         });
+
+                      return null;
                     })
                     .catch(function(err) {
-                      return done(err);
+                      done(err);
+                      return null;
                     });
+
+                  return null;
                 })
                 .catch(function(err) {
-                  return done(err);
+                  done(err);
+                  return null;
                 });
             }
           });
 
         } else {
-          return done(null, user);
+          done(null, user);
+          return null;
         }
+
+        return null;
+      })
+      .catch(function(err) {
+        done(err);
+        return null;
       });
 
   } else {
@@ -281,10 +305,15 @@ exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
       user
         .save()
         .then(function() {
-          return done(null, user, '/settings/accounts');
+          done(null, user, '/settings/accounts');
+          return null;
+        })
+        .catch(function(err) {
+          done(err);
+          return null;
         });
     } else {
-      return done(new Error('User is already connected using this provider'), user);
+      done(new Error('User is already connected using this provider'), user);
     }
   }
 };
@@ -301,7 +330,7 @@ exports.removeOAuthProvider = function(req, res, next) {
       message: 'User is not authenticated'
     });
   } else if (!provider) {
-    return res.status(400).send();
+    res.status(400).send();
   }
 
   //Delete the additional provider
@@ -321,6 +350,8 @@ exports.removeOAuthProvider = function(req, res, next) {
           return res.json(user);
         }
       });
+
+      return null;
     })
     .catch(function(err) {
       return res.status(400).send({

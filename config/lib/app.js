@@ -40,6 +40,8 @@ module.exports.init = function init(callback) {
     if (callback) {
       callback(app, db, config);
     }
+
+    return null;
   });
 };
 

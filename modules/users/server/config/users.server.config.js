@@ -16,6 +16,8 @@ module.exports = function(app) {
   // Serialize sessions
   passport.serializeUser(function(user, done) {
     done(null, user.id);
+
+    return null;
   });
 
   // Deserialize sessions
@@ -38,9 +40,13 @@ module.exports = function(app) {
               });
 
               user.dataValues.roles = roleArray;
-
+              
               done(null, user);
+
+              return null;
             });
+
+          return null;
         }
       })
       .catch(function(error) {

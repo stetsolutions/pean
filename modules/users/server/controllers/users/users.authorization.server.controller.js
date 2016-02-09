@@ -29,7 +29,6 @@ exports.userByID = function(req, res, next, id) {
       }
     })
     .catch(function(error) {
-      console.log(error);
       return next(error);
     });
 };

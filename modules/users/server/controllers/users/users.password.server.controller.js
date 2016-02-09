@@ -39,7 +39,7 @@ exports.forgot = function(req, res, next) {
             }
           })
           .then(function(user) {
-            
+
             if (user.provider !== 'local') {
               return res.status(400).send({
                 message: 'It seems like you signed up using your ' + user.provider + ' account'
@@ -52,6 +52,7 @@ exports.forgot = function(req, res, next) {
                 .save()
                 .then(function() {
                   done(null, token, user);
+                  return null;
                 })
                 .catch(function(err) {
                   return res.status(400).send({
@@ -59,6 +60,8 @@ exports.forgot = function(req, res, next) {
                   });
                 });
             }
+
+            return null;
           })
           .catch(function(err) {
             return res.status(400).send({
@@ -134,7 +137,7 @@ exports.validateResetToken = function(req, res) {
         return res.redirect('/password/reset/invalid');
       }
 
-      res.redirect('/password/reset/' + req.params.token);
+      return res.redirect('/password/reset/' + req.params.token);
     })
     .catch(function(err) {
       return res.status(400).send({
@@ -191,13 +194,19 @@ exports.reset = function(req, res, next) {
                       req.login(user, function(err) {
                         if (err) {
                           res.status(400).send(err);
+                          return null;
                         } else {
                           // Return authenticated user
                           res.json(user);
                           done(null, user);
+                          return null;
                         }
                       });
+
+                      return null;
                     });
+
+                  return null;
                 })
                 .catch(function(err) {
                   return res.status(400).send({
@@ -214,6 +223,8 @@ exports.reset = function(req, res, next) {
               message: 'Password reset token is invalid or has expired.'
             });
           }
+
+          return null;
         })
         .catch(function(err) {
           return res.status(400).send({
@@ -285,13 +296,15 @@ exports.changePassword = function(req, res, next) {
                   .then(function() {
                     req.login(user, function(err) {
                       if (err) {
-                        res.status(400).send(err);
+                        return res.status(400).send(err);
                       } else {
-                        res.send({
+                        return res.send({
                           message: 'Password changed successfully'
                         });
                       }
                     });
+
+                    return null;
                   })
                   .catch(function(err) {
                     return res.status(400).send({
@@ -313,6 +326,8 @@ exports.changePassword = function(req, res, next) {
               message: 'User is not found'
             });
           }
+
+          return null;
         })
         .catch(function(err) {
           return next(err);

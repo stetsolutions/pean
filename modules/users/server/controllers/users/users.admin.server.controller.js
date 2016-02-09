@@ -32,7 +32,7 @@ exports.read = function (req, res) {
       }],
     })
     .then(function(user) {
-      res.json(user);
+      return res.json(user);
     })
     .catch(function(err) {
       return res.status(400).send({
@@ -65,13 +65,15 @@ exports.delete = function(req, res) {
       user
         .destroy()
         .then(function() {
-          res.json(user);
+          return res.json(user);
         })
         .catch(function(err) {
           return res.status(400).send({
             message: errorHandler.getErrorMessage(err)
           });
         });
+
+      return null;
     })
     .catch(function(err) {
       return res.status(400).send({
@@ -130,7 +132,7 @@ exports.list = function(req, res) {
       ]
     })
     .then(function(users) {
-      res.json(users);
+      return res.json(users);
     })
     .catch(function(err) {
       return res.status(400).send({
@@ -180,19 +182,23 @@ exports.modify = function(req, res) {
               }],
             })
             .then(function(user) {
-              res.json(user);
+              return res.json(user);
             })
             .catch(function(err) {
               return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
               });
             });
+
+          return null;
         })
         .catch(function(err) {
           return res.status(400).send({
             message: errorHandler.getErrorMessage(err)
           });
         });
+
+      return null;
     })
     .catch(function(err) {
       return res.status(400).send({
@@ -213,7 +219,7 @@ exports.roles = function (req, res) {
   db.Role
     .findAll()
     .then(function(roles) {
-      res.json(roles);
+      return res.json(roles);
     })
     .catch(function(err) {
       return res.status(400).send({

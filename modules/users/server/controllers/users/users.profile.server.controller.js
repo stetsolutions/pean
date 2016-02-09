@@ -47,7 +47,11 @@ exports.update = function(req, res) {
                 res.json(user);
               }
             });
+
+            return null;
           });
+          
+        return null;
       })
       .catch(function(err) {
         return res.status(400).send({
@@ -91,6 +95,8 @@ exports.changeProfilePicture = function(req, res) {
                 res.json(user);
               }
             });
+
+            return null;
           })
           .catch(function(err) {
             return res.status(400).send({
