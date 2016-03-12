@@ -14,26 +14,24 @@ chalk.enabled = true;
 // Initialize Models
 module.exports.init = function init(callback) {
 
-  if (config.db.force) {
-    console.log(chalk.bold.red('Warning:\tSequelize option "force" is set to "true"'));  
+  if (config.db.sync.force) {
+    console.log(chalk.bold.red('Warning:\tDB_FORCE is true'));  
   }
-
-  if (config.seedDB.seed) {
-    config.db.force = true;
-  }
-
-  sequelize.sequelize.sync({
-    force: config.db.force
-  }).then(function (db) {
+  
+  sequelize.sequelize
+  .sync({
+    force: config.db.sync.force
+  })
+  .then(function (db) {
     var app = express.init(db);
 
     // Seed
-    if (config.db.force) {  
+    if (config.db.sync.force) {  
       seed.setup();
     }
     
-    if (config.seedDB.seed) {
-      console.log(chalk.bold.red('Warning:\tDatabase seeding is turned on'));
+    if (config.seed.init) {
+      console.log(chalk.bold.red('Warning:\tDB_SEED is true'));
       seed.start();
     } 
     

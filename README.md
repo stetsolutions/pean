@@ -100,6 +100,12 @@ In the application folder, run this from the command-line:
 $ grunt
 ```
 
+or in 'debugging' mode:
+
+```
+$ grunt debug
+```
+
 Your application should run on port 3000 with the *development* environment configuration, so in your browser just go to [http://localhost:3000](http://localhost:3000)
 
 That's it! Your application should be running. To proceed with your development, check the other sections in this documentation.
@@ -125,13 +131,20 @@ In Development:
 ```bash
 DB_SEED=true grunt
 ```
-It will try to seed the users 'user' and 'admin'. If one of the user already exists, it will display an error message on the console. Just grab the passwords from the console.
+It will try to seed the users 'user' and 'admin'. If one of the user already exists, it will display an error message on the console. 
+
+Just grab the passwords from the console.
 
 In Production:
 ```bash
 DB_SEED=true grunt prod
 ```
 This will seed the admin user one time if the user does not already exist. You have to copy the password from the console and save it.
+
+To 'force' a complete refresh of the DB, set the Sequelize 'force' option:
+```bash
+DB_FORCE=true DB_SEED=true grunt
+```
 
 ### Running with TLS (SSL)
 Application will start by default with secure configuration (SSL mode) turned on and listen on port 8443.
@@ -167,6 +180,11 @@ And to run only the client tests, run the test:client task:
 
 ```bash
 $ grunt test:client
+```
+
+And to run only the "end to end" tests, run the test:e2e task:
+```bash
+grunt test:e2e
 ```
 
 ## Running your application with Gulp

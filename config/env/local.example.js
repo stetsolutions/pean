@@ -20,11 +20,10 @@
 module.exports = {
   db: {
     options: {
-      database: 'oc_dev',
+      database: 'pean_dev',
       password: 'root',
       username: 'root'
-    },
-    force: true
+    }
   },
   sessionSecret: process.env.SESSION_SECRET || 'youshouldchangethistosomethingsecret',
   facebook: {

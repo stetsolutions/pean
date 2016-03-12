@@ -9,11 +9,11 @@ var config = require('../config'),
 var db = {};
 
 // Sequelize
-var sequelize = new Sequelize(config.db.options.database, config.db.options.username, config.db.options.password, {
+var sequelize = new Sequelize(config.db.database, config.db.username, config.db.password, {
   dialect: 'postgres',
-  logging: false, // console.log
-  host: 'localhost',
-  port: '5432'
+  logging: config.db.options.logging, 
+  host: config.db.options.host,
+  port: config.db.options.port
 });
 
 // Import models
