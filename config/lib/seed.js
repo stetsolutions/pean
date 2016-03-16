@@ -7,7 +7,7 @@ var _ = require('lodash'),
   db = require('./sequelize');
 
 // global seed options object
-var seedOptions = {};
+var data = {};
 
 /**
  * Remove user
@@ -63,11 +63,11 @@ function checkUserNotExists(user) {
         if (users.length === 0) {
           resolve();
         } else {
-          reject(new Error('Failed due to local account already exists: ' + user.username));
+          reject(new Error('Failed: local account already exists: ' + user.username));
         }
       })
       .catch(function(err) {
-        reject(new Error('Failed to find local account ' + user.username));
+        reject(new Error('Failed: local account ' + user.username + ' does note exist'));
       });
   });
 }
@@ -78,8 +78,8 @@ function checkUserNotExists(user) {
 function reportSuccess(password) {
   return function(user) {
     return new Promise(function(resolve, reject) {
-      if (seedOptions.logResults) {
-        console.log(chalk.bold.red('Database Seeding:\tLocal account "' + user.username + '" added with password set to ' + password));
+      if (config.seed.logging) {
+        console.log(chalk.bold.blue('Database Seeding:\tLocal account "' + user.username + '" added with password set to ' + password));
       }
       resolve();
     });
@@ -124,7 +124,7 @@ function seedUser(user, roles) {
       // Set the new password
       user.password = password;
 
-      if (user.username === seedOptions.seedAdmin.username && process.env.NODE_ENV === 'production') {
+      if (user.username === config.seed.data.admin.username && process.env.NODE_ENV === 'production') {
         checkUserNotExists(user)
           .then(saveUser(user, roles))
           .then(reportSuccess(password))
@@ -155,8 +155,8 @@ function seedUser(user, roles) {
 function reportError(reject) {
 
   return function(err) {
-    if (seedOptions.logResults) {
-      console.log('Database Seeding:\t\t\t' + err);
+    if (config.seed.logging) {
+      console.log('Database Seeding:\t' + err);
     }
     reject(err);
   };
@@ -187,35 +187,35 @@ module.exports.start = function start() {
     userRoles = [];
 
   // Initialize the default seed options
-  seedOptions = _.clone(config.seedDB.options, true);
+  data = _.clone(config.seed.data, true);
 
   // Check for provided options
-  if (_.has(seedOptions, 'seedUser')) {
+  if (_.has(data, 'user')) {
     var userAccount = db.User.build({
-      username: seedOptions.seedUser.username,
-      provider: seedOptions.seedUser.provider,
-      email: seedOptions.seedUser.email,
-      firstName: seedOptions.seedUser.firstName,
-      lastName: seedOptions.seedUser.lastName,
-      displayName: seedOptions.seedUser.displayName
+      username: data.user.username,
+      provider: data.user.provider,
+      email: data.user.email,
+      firstName: data.user.firstName,
+      lastName: data.user.lastName,
+      displayName: data.user.displayName
     });
 
-    _.forEach(seedOptions.seedUser.roles, function(value) {
+    _.forEach(data.user.roles, function(value) {
       userRoles.push(config.roles.indexOf(value) + 1);
     });
   }
 
-  if (_.has(seedOptions, 'seedAdmin')) {
+  if (_.has(data, 'admin')) {
     var adminAccount = db.User.build({
-      username: seedOptions.seedAdmin.username,
-      provider: seedOptions.seedAdmin.provider,
-      email: seedOptions.seedAdmin.email,
-      firstName: seedOptions.seedAdmin.firstName,
-      lastName: seedOptions.seedAdmin.lastName,
-      displayName: seedOptions.seedAdmin.displayName
+      username: data.admin.username,
+      provider: data.admin.provider,
+      email: data.admin.email,
+      firstName: data.admin.firstName,
+      lastName: data.admin.lastName,
+      displayName: data.admin.displayName
     });
 
-    _.forEach(seedOptions.seedAdmin.roles, function(value) {
+    _.forEach(data.admin.roles, function(value) {
       adminRoles.push(config.roles.indexOf(value) + 1);
     });
   }

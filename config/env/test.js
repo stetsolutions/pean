@@ -68,11 +68,19 @@ module.exports = {
     }
   },
   roles: ['admin', 'guest', 'user'],
-  seedDB: {
-    seed: process.env.DB_SEED === 'true' ? true : false,
+  db: {
     options: {
-      logResults: process.env.DB_SEED_LOG_RESULTS === 'false' ? false : true,
-      seedUser: {
+      logging: process.env.DB_LOGGING === 'true' ? console.log : false,
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || '5432'
+    },
+    sync: {
+      force: process.env.DB_FORCE === 'true' ? true : false
+    }
+  },
+  seed: {
+    data: {
+      user: {
         username: process.env.DB_SEED_USER_USERNAME || 'user',
         provider: 'local',
         email: process.env.DB_SEED_USER_EMAIL || 'user@localhost.com',
@@ -81,7 +89,7 @@ module.exports = {
         displayName: 'User Local',
         roles: ['user']
       },
-      seedAdmin: {
+      admin: {
         username: process.env.DB_SEED_ADMIN_USERNAME || 'admin',
         provider: 'local',
         email: process.env.DB_SEED_ADMIN_EMAIL || 'admin@localhost.com',
@@ -90,7 +98,9 @@ module.exports = {
         displayName: 'Admin Local',
         roles: ['user', 'admin']
       }
-    }
+    },
+    init: process.env.DB_SEED === 'true' ? true : false,
+    logging: process.env.DB_SEED_LOGGING === 'false' ? false : true
   },
   // This config is set to true during grunt coverage
   coverage: process.env.COVERAGE || false
