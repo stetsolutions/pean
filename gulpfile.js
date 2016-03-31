@@ -284,11 +284,11 @@ gulp.task('build', function (done) {
 
 // Run the project tests
 gulp.task('test', function (done) {
-  runSequence('env:test', 'lint', 'mocha', 'karma', 'nodemon', 'protractor', done);
+  runSequence('env:test', 'nodemon', 'lint', 'mocha', 'karma', 'protractor', done);
 });
 
 gulp.task('test:server', function (done) {
-  runSequence('env:test', 'lint', 'mocha', done);
+  runSequence('env:test', 'nodemon', 'lint', 'mocha', done);
 });
 
 // Watch all server files for changes & run server tests (test:server) task on changes
@@ -304,7 +304,7 @@ gulp.task('test:client', function (done) {
 });
 
 gulp.task('test:e2e', function (done) {
-  runSequence('env:test', 'lint', 'nodemon', 'protractor', done);
+  runSequence('env:test', 'nodemon', 'lint', 'protractor', done);
 });
 
 // Run the project in development mode
