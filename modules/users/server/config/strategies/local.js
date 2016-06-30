@@ -22,9 +22,11 @@ module.exports = function() {
     })
     .then(function(user) {
       if (!user || !user.authenticate(user, password)) {
-        return done(null, false, {
+        done(null, false, {
           message: 'Invalid username or password'
         });
+
+        return null;
       }
 
       done(null, user);
