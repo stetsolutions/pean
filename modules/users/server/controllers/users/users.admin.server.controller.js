@@ -29,7 +29,7 @@ exports.read = function (req, res) {
       },
       include: [{
         all: true
-      }],
+      }]
     })
     .then(function(user) {
       return res.json(user);

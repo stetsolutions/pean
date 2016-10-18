@@ -5,7 +5,7 @@ module.exports = function(sequelize, DataTypes) {
   var Role = sequelize.define('Role', {
     name: {
       type: DataTypes.STRING,
-      unique: true,
+      unique: true
     }
   }, {
     classMethods: {
